@@ -19,6 +19,11 @@ namespace MotionArcade.Core
         [SerializeField] private float fallbackRefreshRate = 90f;     // כשהקסדה לא מדווחת קצב
         [SerializeField] private float headsetWaitSeconds = 5f;       // SteamVR יכול לפתוח session באיחור
 
+        // Foveated rendering ב-Android: השוליים של כל עין מרונדרים ברזולוציה נמוכה יותר, וזה חוסך GPU ב-Quest.
+        // הפיצ'ר של OpenXR רק מאפשר את זה; הרמה עצמה נקבעת כאן על התצוגה. 0 = כבוי, 1 = הכי חזק.
+        // ב-PC לא נוגעים: יש מספיק GPU, והפיצ'ר לא דולק שם.
+        [SerializeField, Range(0f, 1f)] private float androidFoveationLevel = 0.5f;
+
         public static bool HeadsetActive { get; private set; }
         public static float RefreshRate { get; private set; }
 
@@ -61,6 +66,8 @@ namespace MotionArcade.Core
                 {
                     HeadsetActive = true;
                     ApplyRate(rate);
+                    if (Application.platform == RuntimePlatform.Android)
+                        display.foveatedRenderingLevel = androidFoveationLevel;
                     Debug.Log($"[XRPlatformSetup] Headset running at {rate:0.#} Hz, physics step {Time.fixedDeltaTime * 1000f:0.##} ms");
                     yield break;
                 }
