@@ -334,6 +334,7 @@ GameObject:
   - component: {fileID: 132827284}
   - component: {fileID: 132827286}
   - component: {fileID: 132827285}
+  - component: {fileID: 132827287}
   m_Layer: 0
   m_Name: Controls
   m_TagString: Untagged
@@ -348,8 +349,8 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 132827283}
-  m_LocalRotation: {x: 0.1919843, y: -0.45080334, z: 0.0999407, w: 0.86598516}
-  m_LocalPosition: {x: 0, y: 0, z: 0.15}
+  m_LocalRotation: {x: 0.104528464, y: -0, z: -0, w: 0.9945219}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
   m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -362,7 +363,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1, y: 1.15}
+  m_AnchoredPosition: {x: 0, y: 1.38}
   m_SizeDelta: {x: 620, y: 560}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &132827285
@@ -407,6 +408,22 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &132827287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132827283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec40abda2232731429893f5838705184, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.UI.PhaseDock
+  station: {fileID: 1433841195}
+  idlePose: {fileID: 1161629228}
+  runningPose: {fileID: 594461962}
+  moveSeconds: 0.35
 --- !u!1 &142016562
 GameObject:
   m_ObjectHideFlags: 0
@@ -1714,6 +1731,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1259068636}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &360130851
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 360130852}
+  m_Layer: 0
+  m_Name: Panel Poses
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &360130852
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 360130851}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1161629228}
+  - {fileID: 594461962}
+  m_Father: {fileID: 1433841196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &374876303
 GameObject:
   m_ObjectHideFlags: 0
@@ -2893,6 +2943,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 588550040}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &594461961
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 594461962}
+  m_Layer: 0
+  m_Name: Running Pose (side)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &594461962
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594461961}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.1919843, y: -0.45080334, z: 0.0999407, w: 0.86598516}
+  m_LocalPosition: {x: -1, y: 1.15, z: 0.15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 360130852}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &598657247
 GameObject:
   m_ObjectHideFlags: 0
@@ -5051,6 +5132,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1142645951}
   m_CullTransparentMesh: 1
+--- !u!1 &1161629227
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1161629228}
+  m_Layer: 0
+  m_Name: Idle Pose (center)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1161629228
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1161629227}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.104528464, y: -0, z: -0, w: 0.9945219}
+  m_LocalPosition: {x: 0, y: 1.38, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 360130852}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1177993697
 GameObject:
   m_ObjectHideFlags: 0
@@ -6122,13 +6234,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Games.Basketball.BasketballGame
   gameId: basketball
   displayName: BASKETBALL
-  instructions: 'Grab a ball from the tray (grip) and throw it through the hoop.
+  instructions: 'Press START, then grab a ball from the tray (grip) and throw it
+    through the hoop.
 
-    2
-    points a basket, double in the last 10 seconds. 60 seconds.
-
-    You can practise
-    before you press START.'
+    2 points a basket, double in the last 10 seconds. 60 seconds.'
   countdownSeconds: 3
   roundSeconds: 60
   onRoundStarted:
@@ -6178,6 +6287,7 @@ Transform:
   - {fileID: 1259068636}
   - {fileID: 407141190}
   - {fileID: 132827284}
+  - {fileID: 360130852}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1434503603

@@ -46,6 +46,9 @@ namespace MotionArcade.Games.Basketball
 
         public void Init(BasketballGame owner) => game = owner;
 
+        // מחוץ לסבב אי אפשר לתפוס את הכדור. כבוי באמצע החזקה (סוף סבב, STOP) = XRI משחרר אותו מהיד.
+        public void SetGrabbable(bool value) => grab.enabled = value;
+
         private void HandleGrabbed(SelectEnterEventArgs args)
         {
             LastHolder = args.interactorObject;

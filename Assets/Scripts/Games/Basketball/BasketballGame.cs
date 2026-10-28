@@ -6,7 +6,7 @@ namespace MotionArcade.Games.Basketball
 {
     // כדורסל ארקייד, כמו מכונת Pop-A-Shot: מגש כדורים מול השחקן, מסילה משופעת שמחזירה כל כדור למגש,
     // ורשתות בצדדים. 60 שניות, 2 נקודות לסל, כפול ב-10 השניות האחרונות.
-    // מותר לזרוק גם לפני START (אימון): יש צליל ורטט, אבל הנקודות נספרות רק בזמן משחק.
+    // הכדורים נעולים עד START (כמו במכונה אמיתית), כדי שהשחקן לא יתחיל לזרוק בלי לשים לב שהסבב לא התחיל.
     public class BasketballGame : GameStation
     {
         private const string BonusHint = "DOUBLE POINTS!";
@@ -35,6 +35,18 @@ namespace MotionArcade.Games.Basketball
         {
             base.Awake();
             foreach (Ball ball in balls) ball.Init(this);
+        }
+
+        // ב-Start ולא ב-Awake: כל כדור מוצא את ה-XRGrabInteractable שלו ב-Awake שלו, שאולי עוד לא רץ
+        private void Start() => SetBallsGrabbable(IsRunning);   // מתחילים ב-Intro: נעולים
+
+        // נפתחים ב-START (כבר בספירה לאחור, כדי להיות מוכנים), ננעלים בסוף הסבב וב-STOP
+        protected override void OnPhaseEntered(RoundPhase phase) => SetBallsGrabbable(IsRunning);
+
+        private void SetBallsGrabbable(bool value)
+        {
+            foreach (Ball ball in balls)
+                if (ball != null) ball.SetGrabbable(value);
         }
 
         protected override void OnPlayingStarted()

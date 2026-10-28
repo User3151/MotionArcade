@@ -99,6 +99,7 @@ namespace MotionArcade.Core
                 onRoundEnded?.Invoke(Score);
             }
 
+            OnPhaseEntered(next);
             PhaseChanged?.Invoke(next);
         }
 
@@ -106,5 +107,12 @@ namespace MotionArcade.Core
         protected abstract void OnPlayingStarted();
         protected abstract void OnPlayingEnded();
         protected virtual void OnPlayingUpdate() { }
+
+        // כל מעבר שלב, כולל חזרה ל-Intro ב-STOP. בכדורסל: נועל את הכדורים מחוץ לסבב.
+        // לא נקרא על ה-Intro ההתחלתי (אין מעבר), אז משחק שצריך מצב התחלתי מגדיר אותו ב-Awake.
+        protected virtual void OnPhaseEntered(RoundPhase phase) { }
+
+        // true מרגע START ועד סוף הסבב: ספירה לאחור או משחק
+        public bool IsRunning => Phase == RoundPhase.Countdown || Phase == RoundPhase.Playing;
     }
 }

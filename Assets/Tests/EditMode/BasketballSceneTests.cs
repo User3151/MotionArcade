@@ -97,6 +97,22 @@ namespace MotionArcade.Tests
         }
 
         [Test]
+        public void ControlsPanel_StartsInFrontOfThePlayer()
+        {
+            // גיא לא ראה את הלוח כשהיה רק בצד: לפני START הוא חייב להיות מול השחקן, ובזמן סבב בצד
+            var dock = scene.GetRootGameObjects().Select(r => r.GetComponentInChildren<MotionArcade.UI.PhaseDock>(true)).First(d => d != null);
+            var so = new SerializedObject(dock);
+            Assert.That(so.FindProperty("station").objectReferenceValue, Is.SameAs(game));
+            var idle = (Transform)so.FindProperty("idlePose").objectReferenceValue;
+            var running = (Transform)so.FindProperty("runningPose").objectReferenceValue;
+            Assert.That(idle, Is.Not.Null);
+            Assert.That(running, Is.Not.Null);
+            Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f), "centred");
+            Assert.That(idle.position.z, Is.InRange(0.6f, 1.5f), "within arm's reach of the ray, in front of the player");
+            Assert.That(Mathf.Abs(running.position.x), Is.GreaterThan(0.85f), "out of the throwing lane during play");
+        }
+
+        [Test]
         public void NoRealtimeLightsInTheGame()
         {
             // המשחק מקבל אור מהאולם האפוי (light probes). אור בזמן אמת כאן היה עולה ביוקר ב-Quest.
