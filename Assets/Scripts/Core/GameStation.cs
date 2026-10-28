@@ -34,6 +34,10 @@ namespace MotionArcade.Core
         public float RoundSeconds => clock.RoundSeconds;
         public int Score { get; private set; }
 
+        // שורה קצרה שהלוח מציג בזמן משחק, למשל "DOUBLE POINTS!" בכדורסל. null = כלום.
+        // הלוח קורא אותה פעם בשנייה, אז היא צריכה להחזיר מחרוזת קבועה ולא לבנות חדשה (בלי GC).
+        public virtual string PlayingHint => null;
+
         public event Action<RoundPhase> PhaseChanged;
         public event Action<int> ScoreChanged;
 
@@ -76,7 +80,8 @@ namespace MotionArcade.Core
         {
             if (previous == RoundPhase.Playing) OnPlayingEnded();
 
-            if (next == RoundPhase.Countdown || (next == RoundPhase.Playing && previous != RoundPhase.Countdown))
+            // ניקוד מתאפס בתחילת סבב, וגם ב-STOP (חזרה ל-Intro): אחרת הלוח מציג נקודות של סבב שלא נספר
+            if (next == RoundPhase.Intro || next == RoundPhase.Countdown || (next == RoundPhase.Playing && previous != RoundPhase.Countdown))
             {
                 Score = 0;
                 ScoreChanged?.Invoke(Score);

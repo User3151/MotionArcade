@@ -5,30 +5,40 @@ using UnityEngine.UI;
 
 namespace MotionArcade.UI
 {
-    // הלוח של כל משחק: שם, הסבר, ספירה לאחור, זמן, ניקוד ותוצאה, עם START ו-BACK.
+    // הלוח של כל משחק: שם, הסבר, ספירה לאחור, זמן, ניקוד ותוצאה, עם START / STOP / BACK.
     // לא יודע כלום על המשחק עצמו, רק על GameStation, אז אותו לוח משמש את כל המשחקים.
+    // הכפתורים יכולים לשבת בקנבס אחר מהתצוגה (בכדורסל: לוח גבוה מעל הסל, כפתורים ליד השחקן).
     public class ScoreBoard : MonoBehaviour
     {
         [SerializeField] private GameStation station;
 
         [Header("Text")]
         [SerializeField] private TMP_Text title;
-        [SerializeField] private TMP_Text info;      // הסבר ב-Intro, תוצאה ב-Results
+        [SerializeField] private TMP_Text info;      // הסבר ב-Intro, רמז בזמן משחק, תוצאה ב-Results
         [SerializeField] private TMP_Text clock;     // 3-2-1 בספירה, שניות שנשארו במשחק
         [SerializeField] private TMP_Text score;
 
         [Header("Buttons")]
         [SerializeField] private Button startButton;
         [SerializeField] private TMP_Text startLabel;
-        [SerializeField] private Button backButton;
+        [SerializeField] private Button stopButton;   // רק בזמן ספירה ומשחק: עוצר בלי לרשום את הסבב
+        [SerializeField] private Button backButton;   // תמיד: חזרה לאולם, גם באמצע סבב (שלא נרשם)
+
+        [Header("Sound (optional)")]
+        [SerializeField] private AudioSource sfx;
+        [SerializeField] private AudioClip countdownTick;
+        [SerializeField] private AudioClip roundStart;
+        [SerializeField] private AudioClip roundEnd;
 
         private int shownSeconds = -1;
+        private string shownHint;
 
         private void OnEnable()
         {
             station.PhaseChanged += HandlePhase;
             station.ScoreChanged += HandleScore;
             startButton.onClick.AddListener(station.StartRound);
+            if (stopButton != null) stopButton.onClick.AddListener(station.AbortRound);
             backButton.onClick.AddListener(Back);
         }
 
@@ -37,6 +47,7 @@ namespace MotionArcade.UI
             station.PhaseChanged -= HandlePhase;
             station.ScoreChanged -= HandleScore;
             startButton.onClick.RemoveListener(station.StartRound);
+            if (stopButton != null) stopButton.onClick.RemoveListener(station.AbortRound);
             backButton.onClick.RemoveListener(Back);
         }
 
@@ -58,15 +69,18 @@ namespace MotionArcade.UI
             if (seconds == shownSeconds) return;
             shownSeconds = seconds;
             clock.SetText("{0}", seconds);   // SetText עם מספר לא יוצר מחרוזת חדשה (בלי GC)
+
+            if (phase == RoundPhase.Countdown) Play(countdownTick);
+            else ShowHint(station.PlayingHint);
         }
 
         private void HandlePhase(RoundPhase phase)
         {
             shownSeconds = -1;
-            bool idle = phase == RoundPhase.Intro || phase == RoundPhase.Results;
-            startButton.gameObject.SetActive(idle);
-            backButton.gameObject.SetActive(idle);
-            clock.gameObject.SetActive(!idle);
+            bool running = phase == RoundPhase.Countdown || phase == RoundPhase.Playing;
+            startButton.gameObject.SetActive(!running);
+            if (stopButton != null) stopButton.gameObject.SetActive(running);
+            clock.gameObject.SetActive(running);
 
             switch (phase)
             {
@@ -78,16 +92,33 @@ namespace MotionArcade.UI
                     info.text = "Get ready";
                     break;
                 case RoundPhase.Playing:
+                    shownHint = null;
                     info.text = "";
+                    ShowHint(station.PlayingHint);
+                    Play(roundStart);
                     break;
                 case RoundPhase.Results:
                     info.text = ResultText();
                     startLabel.text = "PLAY AGAIN";
+                    Play(roundEnd);
                     break;
             }
         }
 
+        // השוואה לפי הפניה: המשחק מחזיר מחרוזות קבועות, אז אין כאן השוואת תווים ואין הקצאה
+        private void ShowHint(string hint)
+        {
+            if ((object)hint == shownHint) return;
+            shownHint = hint;
+            info.text = hint ?? "";
+        }
+
         private void HandleScore(int value) => score.SetText("{0}", value);
+
+        private void Play(AudioClip clip)
+        {
+            if (sfx != null && clip != null) sfx.PlayOneShot(clip);
+        }
 
         private string ResultText()
         {
