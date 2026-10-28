@@ -42,6 +42,14 @@ namespace MotionArcade.Core
             return true;
         }
 
+        // השחקן השלים את המשימה לפני שנגמר הזמן (בחצים: הגיע לבול): הסבב נגמר עכשיו ונרשם כרגיל
+        public bool Finish()
+        {
+            if (Phase != RoundPhase.Playing) return false;
+            Enter(RoundPhase.Results, 0f);
+            return true;
+        }
+
         // יציאה באמצע (חזרה לאולם): בלי Results, כי סבב שנקטע לא נחשב
         public void Abort()
         {

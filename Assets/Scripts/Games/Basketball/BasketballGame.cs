@@ -40,8 +40,13 @@ namespace MotionArcade.Games.Basketball
         // ב-Start ולא ב-Awake: כל כדור מוצא את ה-XRGrabInteractable שלו ב-Awake שלו, שאולי עוד לא רץ
         private void Start() => SetBallsGrabbable(IsRunning);   // מתחילים ב-Intro: נעולים
 
-        // נפתחים ב-START (כבר בספירה לאחור, כדי להיות מוכנים), ננעלים בסוף הסבב וב-STOP
-        protected override void OnPhaseEntered(RoundPhase phase) => SetBallsGrabbable(IsRunning);
+        // נפתחים ב-START (כבר בספירה לאחור, כדי להיות מוכנים), ננעלים בסוף הסבב וב-STOP.
+        // ב-START גם כל הכדורים חוזרים למגש, כך שהם זמינים כבר בספירה (כמו בחצים).
+        protected override void OnPhaseEntered(RoundPhase phase)
+        {
+            SetBallsGrabbable(IsRunning);
+            if (phase == RoundPhase.Countdown) ResetBalls();
+        }
 
         private void SetBallsGrabbable(bool value)
         {
@@ -49,7 +54,10 @@ namespace MotionArcade.Games.Basketball
                 if (ball != null) ball.SetGrabbable(value);
         }
 
-        protected override void OnPlayingStarted()
+        // סל שהתחיל להיספר בספירה לאחור (כדור באוויר) לא ממשיך לתוך הסבב
+        protected override void OnPlayingStarted() => detector.Clear();
+
+        private void ResetBalls()
         {
             detector.Clear();
             // כל כדור שלא ביד מקבל משבצת משלו במגש, כדי שהסבב יתחיל עם כל הכדורים זמינים.

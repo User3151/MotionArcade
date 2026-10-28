@@ -14,6 +14,8 @@ namespace MotionArcade.Diagnostics
     // לא קיים בכלל ב-build רגיל (#if למעלה).
     // ידוע: כשכדורים מתנגשים, Unity 6.3 עצמו מקצה 24 בייט בחלק מהפריימים בתוך Physics.OnSceneContact
     // (נמצא בהקלטת Profiler, 2026-10-28). זה קוד של המנוע, לא של המשחק, ואין לו מנוי בפרויקט.
+    // ב-build של Windows (Mono) הקריאה הראשונה לכל פונקציה מקצה זיכרון לקומפילציה (Mono.JIT). זה חד-פעמי,
+    // ולא קיים ב-Quest (IL2CPP, הכל מקומפל מראש). לכן יש סבב חימום לפני המדידה.
     public class GcProbe : MonoBehaviour
     {
         private const string Flag = "-gcprobe";
@@ -50,7 +52,13 @@ namespace MotionArcade.Diagnostics
             Scene scene = SceneManager.GetSceneByName(gameScene);
             foreach (GameObject root in scene.GetRootGameObjects())
                 foreach (Rigidbody body in root.GetComponentsInChildren<Rigidbody>())
-                    if (!body.isKinematic) body.linearVelocity = new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 4f, 2.5f);
+                {
+                    // חץ: זריקה אמיתית מגובה יד אל הלוח (כיוון באוויר, נעיצה, ניקוד). שאר החפצים: דחיפה למעלה וקדימה.
+                    if (body.TryGetComponent(out ILaunchable launchable))
+                        launchable.Launch(body.position + Vector3.up * 0.6f, new Vector3(UnityEngine.Random.Range(-0.3f, 0.3f), 2.6f, 5.5f));
+                    else if (!body.isKinematic)
+                        body.linearVelocity = new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 4f, 2.5f);
+                }
         }
 
         private IEnumerator Start()
@@ -89,6 +97,9 @@ namespace MotionArcade.Diagnostics
                 yield break;
             }
 
+            // לפני המדידה: GetCommandLineArgs מחזיר מערך חדש בכל קריאה, וזה היה נספר בפריים הראשון שנמדד
+            string capture = ArgAfter("-gcprobe-capture");
+
             // זריקה ראשונה לחימום: בפעם הראשונה שכמה כדורים מתנגשים יחד, מנוע הפיזיקה מגדיל חוצצים פנימיים
             // (הקצאה חד-פעמית של עשרות בייטים). מודדים את הזריקה השנייה, כלומר את המצב הקבוע של המשחק.
             KickBodies();
@@ -97,7 +108,6 @@ namespace MotionArcade.Diagnostics
             yield return null;   // המונה סופר את כל הפריים, כולל מה שקרה בו לפני שהמדידה התחילה
 
             // ‎-gcprobe-capture <file>‎: גם מקליט את חלון המדידה ל-Profiler, כדי לראות בדיוק מי הקצה (נפתח ב-Editor)
-            string capture = ArgAfter("-gcprobe-capture");
             if (capture != null)
             {
                 UnityEngine.Profiling.Profiler.logFile = capture;

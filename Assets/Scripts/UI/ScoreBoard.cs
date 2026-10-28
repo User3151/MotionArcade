@@ -122,7 +122,7 @@ namespace MotionArcade.UI
 
         private string ResultText()
         {
-            string text = $"Time's up!\nScore: {station.Score}";
+            string text = (station.FinishedEarly ? "Complete!" : "Time's up!") + $"\nScore: {station.Score}";
             SessionManager session = SessionManager.Instance;
             if (session == null) return text;
 

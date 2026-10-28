@@ -24,7 +24,24 @@ namespace MotionArcade.Feedback
         public void Show(int points)
         {
             text.SetText("+{0}", points);
+            Begin();
+        }
+
+        // תווית במקום מסוים בעולם (בחצים: "T20" ליד החץ). המחרוזת צריכה להיות קבועה מראש, לא נבנית כאן.
+        public void ShowAt(Vector3 worldPosition, string label, Color tint)
+        {
+            transform.position = worldPosition;
+            start = transform.localPosition;
+            color = tint;
+            text.SetText(label);
+            Begin();
+        }
+
+        private void Begin()
+        {
             timer = seconds;
+            color.a = 1f;
+            text.color = color;
             text.enabled = true;
         }
 

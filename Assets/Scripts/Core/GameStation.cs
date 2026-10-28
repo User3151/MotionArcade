@@ -67,6 +67,17 @@ namespace MotionArcade.Core
         // חזרה ל-Intro בלי תוצאה. סבב שנקטע באמצע לא נרשם.
         public void AbortRound() => clock.Abort();
 
+        // המשחק הושלם לפני הזמן: עוברים ל-Results עכשיו, והסבב נרשם
+        protected bool FinishRound()
+        {
+            if (clock.Phase != RoundPhase.Playing) return false;
+            FinishedEarly = true;   // לפני המעבר, כדי שהלוח יראה אותו כשהוא מציג את התוצאה
+            return clock.Finish();
+        }
+
+        // הסבב האחרון הושלם לפני הזמן (הלוח כותב "Complete!" במקום "Time's up!")
+        public bool FinishedEarly { get; private set; }
+
         // נקודות נספרות רק בזמן משחק, כדי שכדור שנכנס בספירה לאחור או אחרי הצפירה לא ייחשב
         protected bool AddScore(int points)
         {
@@ -83,6 +94,7 @@ namespace MotionArcade.Core
             // ניקוד מתאפס בתחילת סבב, וגם ב-STOP (חזרה ל-Intro): אחרת הלוח מציג נקודות של סבב שלא נספר
             if (next == RoundPhase.Intro || next == RoundPhase.Countdown || (next == RoundPhase.Playing && previous != RoundPhase.Countdown))
             {
+                FinishedEarly = false;
                 Score = 0;
                 ScoreChanged?.Invoke(Score);
             }

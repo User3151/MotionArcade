@@ -14,6 +14,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Game_Basketball.unity
     guid: 042bedcdf5404e6438c569ef563b38a6
+  - enabled: 1
+    path: Assets/Scenes/Game_Darts.unity
+    guid: 4c2fb5dd9408a2d44b38f4d6a267e61e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: a7d71ccec1c12e74eb89dd175032d147, type: 2}
