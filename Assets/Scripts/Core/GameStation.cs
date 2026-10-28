@@ -38,6 +38,9 @@ namespace MotionArcade.Core
         // הלוח קורא אותה פעם בשנייה, אז היא צריכה להחזיר מחרוזת קבועה ולא לבנות חדשה (בלי GC).
         public virtual string PlayingHint => null;
 
+        // שורות נוספות למסך התוצאה (ב-Whack: פגיעות, החטאות, זמן תגובה). נבנה פעם אחת בסוף הסבב.
+        public virtual string ResultDetails => null;
+
         public event Action<RoundPhase> PhaseChanged;
         public event Action<int> ScoreChanged;
 
