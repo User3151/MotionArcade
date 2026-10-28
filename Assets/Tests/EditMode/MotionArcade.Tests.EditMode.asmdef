@@ -9,7 +9,11 @@
         "Unity.XR.Management.Editor",
         "Unity.XR.OpenXR",
         "Unity.XR.Interaction.Toolkit",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.Splines",
+        "Unity.Mathematics",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"
