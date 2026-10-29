@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.XR.Management;
@@ -44,6 +45,19 @@ namespace MotionArcade.Tests
 
             var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Standalone);
             Assert.That(openxr.renderMode, Is.EqualTo(OpenXRSettings.RenderMode.SinglePassInstanced));
+        }
+
+        [Test]
+        public void OpenXR_PC_HasTheControllerProfilesSteamVRUses()
+        {
+            // 2026-10-28: Unity יצר מחדש את קובץ הגדרות ה-OpenXR כשנוסף Android, והפרופילים של ה-PC נעלמו
+            // (נשאר רק Touch Pro, ש-SteamVR לא תומך בו). בלי פרופיל OpenXR לא חושף בקרים: אין ידיים ואין אינטראקציה.
+            // PSVR2 דרך SteamVR מוצג כ-Oculus Touch; Index ו-Simple לגיבוי.
+            var openxr = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Standalone);
+            var on = openxr.GetFeatures().Where(f => f.enabled).Select(f => f.GetType().Name).ToArray();
+            Assert.That(on, Does.Contain("OculusTouchControllerProfile"));
+            Assert.That(on, Does.Contain("ValveIndexControllerProfile"));
+            Assert.That(on, Does.Contain("KHRSimpleControllerProfile"));
         }
 
         [Test]
