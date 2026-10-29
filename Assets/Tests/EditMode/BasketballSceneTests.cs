@@ -51,7 +51,13 @@ namespace MotionArcade.Tests
                 // כדור של 6 מ'/ש' עובר 7 ס"מ בצעד פיזיקה: בלי Continuous הוא יכול לעבור דרך טבעת בעובי 2 ס"מ
                 Assert.That(body.collisionDetectionMode, Is.EqualTo(CollisionDetectionMode.ContinuousDynamic), ball.name);
                 Assert.That(body.interpolation, Is.EqualTo(RigidbodyInterpolation.Interpolate), ball.name);
-                Assert.That(ball.GetComponent<XRGrabInteractable>().throwOnDetach, Is.True, ball.name);
+                var grab = ball.GetComponent<XRGrabInteractable>();
+                // זריקה משלנו (החלון האחרון), תפיסה רק ביד, ותמיד באותה נקודה מול כף היד
+                Assert.That(grab.throwOnDetach, Is.False, ball.name + ": ControllerThrow throws, not XRI");
+                Assert.That(ball.GetComponent<MotionArcade.Interaction.ControllerThrow>(), Is.Not.Null, ball.name);
+                Assert.That(ball.GetComponent<MotionArcade.Interaction.NearOnlyGrab>(), Is.Not.Null, ball.name);
+                Assert.That(grab.useDynamicAttach, Is.False, ball.name);
+                Assert.That(grab.attachTransform, Is.Not.Null.And.Not.SameAs(ball.transform), ball.name);
                 Assert.That(ball.GetComponent<SphereCollider>().sharedMaterial, Is.Not.Null, ball.name + " has no physic material");
             }
         }
@@ -109,7 +115,8 @@ namespace MotionArcade.Tests
             Assert.That(running, Is.Not.Null);
             Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f), "centred");
             Assert.That(idle.position.z, Is.InRange(0.6f, 1.5f), "within arm's reach of the ray, in front of the player");
-            Assert.That(Mathf.Abs(running.position.x), Is.GreaterThan(0.85f), "out of the throwing lane during play");
+            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
+            Assert.That(new SerializedObject(dock).FindProperty("runningScale").floatValue, Is.LessThan(0.8f), "smaller during play");
         }
 
         [Test]

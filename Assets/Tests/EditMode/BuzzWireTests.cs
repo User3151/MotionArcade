@@ -89,6 +89,35 @@ namespace MotionArcade.Tests
         }
 
         [Test]
+        public void Slipping_DoesNotAdvance_ButIsNotAJumpWhenTheRingComesBack()
+        {
+            // גיא: נגע הרבה, "המשחק התאפס" בלי שהבין. החלקה (החוט קצת מחוץ ללולאה) היא נגיעה, לא יציאה.
+            var p = new WireProgress();
+            Slide(p, 0f, 0.40f);
+            float time = 5f;
+            for (float t = 0.40f; t <= 0.46f; t += 0.01f, time += 0.02f) p.Update(true, t, true, time, advance: false);
+            Assert.That(p.OnWire, Is.True);
+            Assert.That(p.Best, Is.EqualTo(0.40f).Within(0.006f), "no progress while slipping");
+            p.Update(true, 0.47f, false, time);
+            Assert.That(p.OnWire, Is.True, "coming back on is not a jump");
+            Assert.That(p.Best, Is.EqualTo(0.47f).Within(1e-4f));
+            Assert.That(p.Touches, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Slipping_CannotPassACheckpointOrFinish()
+        {
+            var p = new WireProgress();
+            Slide(p, 0f, 0.24f);
+            p.Update(true, 0.26f, true, 9f, advance: false);
+            Assert.That(p.Checkpoint, Is.EqualTo(0f));
+            var q = new WireProgress();
+            Slide(q, 0f, 0.98f);
+            q.Update(true, 0.99f, true, 20f, advance: false);
+            Assert.That(q.Finished, Is.False);
+        }
+
+        [Test]
         public void Touches_CountOncePerContact()
         {
             var p = new WireProgress();

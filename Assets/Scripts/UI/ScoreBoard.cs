@@ -17,6 +17,7 @@ namespace MotionArcade.UI
         [SerializeField] private TMP_Text info;      // הסבר ב-Intro, רמז בזמן משחק, תוצאה ב-Results
         [SerializeField] private TMP_Text clock;     // 3-2-1 בספירה, שניות שנשארו במשחק
         [SerializeField] private TMP_Text score;
+        [SerializeField] private TMP_Text displayHint;   // אופציונלי: הרמז גם בתצוגה הגדולה, שהשחקן מסתכל עליה כל הזמן
 
         [Header("Buttons")]
         [SerializeField] private Button startButton;
@@ -85,6 +86,7 @@ namespace MotionArcade.UI
             switch (phase)
             {
                 case RoundPhase.Intro:
+                    if (displayHint != null) displayHint.text = "";
                     info.text = station.Instructions;
                     startLabel.text = "START";
                     break;
@@ -98,6 +100,7 @@ namespace MotionArcade.UI
                     Play(roundStart);
                     break;
                 case RoundPhase.Results:
+                    if (displayHint != null) displayHint.text = "";
                     info.text = ResultText();
                     startLabel.text = "PLAY AGAIN";
                     Play(roundEnd);
@@ -111,6 +114,7 @@ namespace MotionArcade.UI
             if ((object)hint == shownHint) return;
             shownHint = hint;
             info.text = hint ?? "";
+            if (displayHint != null) displayHint.text = hint ?? "";
         }
 
         private void HandleScore(int value) => score.SetText("{0}", value);

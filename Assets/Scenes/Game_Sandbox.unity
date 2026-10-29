@@ -168,6 +168,7 @@ GameObject:
   - component: {fileID: 404253772}
   - component: {fileID: 404253771}
   - component: {fileID: 404253774}
+  - component: {fileID: 404253775}
   m_Layer: 0
   m_Name: Target 4
   m_TagString: Untagged
@@ -184,7 +185,7 @@ Transform:
   m_GameObject: {fileID: 404253769}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: 1.55, z: 0.55}
+  m_LocalPosition: {x: 0.18, y: 1.45, z: 0.46}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -342,6 +343,19 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!114 &404253775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404253769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51166aaea727dce418b9b37c40fa83e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
+  maxDistance: 0.12
 --- !u!1 &454230008
 GameObject:
   m_ObjectHideFlags: 0
@@ -818,6 +832,7 @@ MonoBehaviour:
   info: {fileID: 1779537583}
   clock: {fileID: 602713819}
   score: {fileID: 1641369442}
+  displayHint: {fileID: 0}
   startButton: {fileID: 1840549907}
   startLabel: {fileID: 1716499704}
   stopButton: {fileID: 1896746275}
@@ -978,6 +993,7 @@ GameObject:
   - component: {fileID: 857151402}
   - component: {fileID: 857151401}
   - component: {fileID: 857151404}
+  - component: {fileID: 857151405}
   m_Layer: 0
   m_Name: Target 3
   m_TagString: Untagged
@@ -994,7 +1010,7 @@ Transform:
   m_GameObject: {fileID: 857151399}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.3, y: 1.55, z: 0.55}
+  m_LocalPosition: {x: -0.18, y: 1.45, z: 0.46}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1152,6 +1168,19 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!114 &857151405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 857151399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51166aaea727dce418b9b37c40fa83e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
+  maxDistance: 0.12
 --- !u!1 &949962040
 GameObject:
   m_ObjectHideFlags: 0
@@ -1302,6 +1331,7 @@ GameObject:
   - component: {fileID: 1000359976}
   - component: {fileID: 1000359975}
   - component: {fileID: 1000359974}
+  - component: {fileID: 1000359979}
   m_Layer: 0
   m_Name: Target 5
   m_TagString: Untagged
@@ -1470,12 +1500,25 @@ Transform:
   m_GameObject: {fileID: 1000359973}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.85, z: 0.55}
+  m_LocalPosition: {x: 0, y: 1.3, z: 0.48}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 280197223}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1000359979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000359973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51166aaea727dce418b9b37c40fa83e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
+  maxDistance: 0.12
 --- !u!1 &1014808039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1628,10 +1671,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Games.Sandbox.SandboxGame
   gameId: sandbox
   displayName: SANDBOX
-  instructions: 'Grab the glowing target with either hand (grip).
+  instructions: 'Touch the glowing target with either hand and press the trigger
+    (or grip).
 
-    Every catch
-    is a point. You have 30 seconds.'
+    Every catch is a point. You have 30 seconds.'
   countdownSeconds: 3
   roundSeconds: 30
   onRoundStarted:
@@ -1678,6 +1721,7 @@ GameObject:
   - component: {fileID: 1267871612}
   - component: {fileID: 1267871611}
   - component: {fileID: 1267871614}
+  - component: {fileID: 1267871615}
   m_Layer: 0
   m_Name: Target 1
   m_TagString: Untagged
@@ -1694,7 +1738,7 @@ Transform:
   m_GameObject: {fileID: 1267871609}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.45, y: 1.1, z: 0.5}
+  m_LocalPosition: {x: -0.3, y: 1.15, z: 0.42}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1852,6 +1896,19 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!114 &1267871615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1267871609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51166aaea727dce418b9b37c40fa83e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
+  maxDistance: 0.12
 --- !u!1 &1641369440
 GameObject:
   m_ObjectHideFlags: 0
@@ -2593,6 +2650,7 @@ GameObject:
   - component: {fileID: 1917493368}
   - component: {fileID: 1917493367}
   - component: {fileID: 1917493370}
+  - component: {fileID: 1917493371}
   m_Layer: 0
   m_Name: Target 2
   m_TagString: Untagged
@@ -2609,7 +2667,7 @@ Transform:
   m_GameObject: {fileID: 1917493365}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.45, y: 1.1, z: 0.5}
+  m_LocalPosition: {x: 0.3, y: 1.15, z: 0.42}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.12}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2767,6 +2825,19 @@ MonoBehaviour:
   m_StartingInteractionStrengthFilters: []
   m_AutoFindParentInteractableInHierarchy: 0
   m_ParentInteractableObject: {fileID: 0}
+--- !u!114 &1917493371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1917493365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51166aaea727dce418b9b37c40fa83e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
+  maxDistance: 0.12
 --- !u!1 &2124410911
 GameObject:
   m_ObjectHideFlags: 0

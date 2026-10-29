@@ -43,25 +43,31 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void TwelveHoles_AroundThePlayer_WithinReach()
+        public void EightHoles_AllInView_AndWithinMalletReach()
         {
             var holes = Holes();
-            Assert.That(holes.Length, Is.EqualTo(12));
+            Assert.That(holes.Length, Is.EqualTo(8));
             Assert.That(holes, Has.None.Null);
             foreach (var h in holes)
             {
                 Vector3 p = h.transform.position;
                 float horizontal = new Vector2(p.x, p.z).magnitude;
-                Assert.That(horizontal, Is.InRange(0.6f, 0.8f), h.name + ": reachable with a mallet from the stand spot");
-                Assert.That(p.y, Is.InRange(0.85f, 1.75f), h.name);
+                Assert.That(horizontal, Is.InRange(0.45f, 0.65f), h.name);
+                // גיא היה צריך לצעוד אחורה כדי לראות את כולם ולהישען כדי להגיע: בדיקה מנקודת העמידה
+                Vector3 fromEye = p - new Vector3(0f, 1.6f, 0f);
+                Assert.That(Mathf.Abs(Mathf.Atan2(fromEye.x, fromEye.z) * Mathf.Rad2Deg), Is.LessThanOrEqualTo(45f), h.name + " in view without turning");
+                Assert.That(Mathf.Atan2(fromEye.y, new Vector2(fromEye.x, fromEye.z).magnitude) * Mathf.Rad2Deg, Is.GreaterThanOrEqualTo(-45f), h.name + " in view without bending");
+                Vector3 shoulder = new Vector3(Mathf.Sign(p.x) * 0.18f, 1.4f, 0f);
+                Assert.That(Vector3.Distance(shoulder, p), Is.LessThanOrEqualTo(0.65f), h.name + ": arm plus a 30 cm mallet, no leaning");
+                Assert.That(p.y, Is.InRange(0.95f, 1.6f), h.name);
                 // הפתח פונה אל השחקן ולמעלה: מכה מלמעלה ולפנים נכנסת לחור
                 Assert.That(Vector3.Dot(h.Normal, -new Vector3(p.x, 0f, p.z).normalized), Is.GreaterThan(0.3f), h.name + " faces the player");
                 Assert.That(h.Normal.y, Is.GreaterThan(0.3f), h.name + " tilts up");
             }
             // גם שמאל וגם ימין, גם נמוך וגם גבוה: הטווח של התנועה
-            Assert.That(holes.Min(h => h.transform.position.x), Is.LessThan(-0.5f));
-            Assert.That(holes.Max(h => h.transform.position.x), Is.GreaterThan(0.5f));
-            Assert.That(holes.Max(h => h.transform.position.y) - holes.Min(h => h.transform.position.y), Is.GreaterThan(0.6f));
+            Assert.That(holes.Min(h => h.transform.position.x), Is.LessThan(-0.3f));
+            Assert.That(holes.Max(h => h.transform.position.x), Is.GreaterThan(0.3f));
+            Assert.That(holes.Max(h => h.transform.position.y) - holes.Min(h => h.transform.position.y), Is.GreaterThan(0.25f));
         }
 
         [Test]
@@ -111,14 +117,14 @@ namespace MotionArcade.Tests
             var idle = (Transform)dso.FindProperty("idlePose").objectReferenceValue;
             var running = (Transform)dso.FindProperty("runningPose").objectReferenceValue;
             Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(running.position.x), Is.GreaterThan(0.85f));
+            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
         }
 
         [Test]
         public void EverySoundGoesThroughTheSfxGroup()
         {
             var sources = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<AudioSource>(true)).ToArray();
-            Assert.That(sources.Length, Is.GreaterThanOrEqualTo(12));
+            Assert.That(sources.Length, Is.GreaterThanOrEqualTo(8));
             foreach (var s in sources)
                 Assert.That(s.outputAudioMixerGroup != null && s.outputAudioMixerGroup.name == "SFX", Is.True, s.name);
         }

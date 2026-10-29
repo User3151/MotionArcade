@@ -111,7 +111,7 @@ namespace MotionArcade.Tests
             var dock = scene.GetRootGameObjects().Select(r => r.GetComponentInChildren<PhaseDock>(true)).First(d => d != null);
             var dso = new SerializedObject(dock);
             Assert.That(Mathf.Abs(((Transform)dso.FindProperty("idlePose").objectReferenceValue).position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(((Transform)dso.FindProperty("runningPose").objectReferenceValue).position.x), Is.GreaterThan(0.85f));
+            Assert.That(Mathf.Abs(((Transform)dso.FindProperty("runningPose").objectReferenceValue).position.x), Is.LessThan(0.1f), "stays in view during play");
         }
 
         [Test]

@@ -50,7 +50,9 @@ namespace MotionArcade.Games.BuzzWire
             lastTouchTime = float.NegativeInfinity;
         }
 
-        public void Update(bool threaded, float t, bool touching, float time)
+        // advance = false: הטבעת "מחליקה" (החוט קצת מחוץ ללולאה). המיקום ממשיך לעקוב אחרי הטבעת, כדי שלא תיחשב
+        // קפיצה כשהיא חוזרת, אבל לא מתקדמים: לא שיא חדש, לא נקודת ביקורת ולא סיום.
+        public void Update(bool threaded, float t, bool touching, float time, bool advance = true)
         {
             if (Finished) return;
 
@@ -75,13 +77,15 @@ namespace MotionArcade.Games.BuzzWire
             }
 
             Position = t;
-            if (Position > Best) Best = Position;
-
-            foreach (float cp in Checkpoints)
+            if (advance)
             {
-                if (Position < cp || cp <= Checkpoint) continue;
-                Checkpoint = cp;
-                CheckpointReached?.Invoke(cp);
+                if (Position > Best) Best = Position;
+                foreach (float cp in Checkpoints)
+                {
+                    if (Position < cp || cp <= Checkpoint) continue;
+                    Checkpoint = cp;
+                    CheckpointReached?.Invoke(cp);
+                }
             }
 
             if (touching && !Touching && time - lastTouchTime >= TouchDebounce)
@@ -93,7 +97,7 @@ namespace MotionArcade.Games.BuzzWire
             if (touching) lastTouchTime = time;   // נגיעה רציפה לא נספרת שוב עד שמשתחררים
             Touching = touching;
 
-            if (Position >= FinishAt)
+            if (advance && Position >= FinishAt)
             {
                 Finished = true;
                 Best = 1f;   // הגיע לסוף: 100%, גם אם הבדיקה האחרונה הייתה ב-0.99

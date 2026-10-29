@@ -13,7 +13,7 @@ namespace MotionArcade.Games.BuzzWire
     public class BuzzWireGame : GameStation
     {
         private const string StartHint = "Put the ring around the wire at the BLUE start";
-        private const string BackHint = "Off the wire: go back to the flashing marker";
+        private const string BackHint = "OFF THE WIRE! Go back to the flashing marker";
 
         [Header("Tracks")]
         [SerializeField] private WireTrack[] tracks;
@@ -22,6 +22,9 @@ namespace MotionArcade.Games.BuzzWire
         [SerializeField] private TMP_Text trackButtonLabel;
         [SerializeField] private TMP_Text trackDisplay;
         [SerializeField] private TMP_Text touchesDisplay;
+        [SerializeField] private TMP_Text progressDisplay;   // אחוז ההתקדמות, כל הזמן מול העיניים
+        // כמה רחוק מעבר לטבעת מותר לחוט "לברוח" לפני שזה נחשב יציאה מהחוט. בטווח הזה זו נגיעה (באזר), לא איפוס.
+        [SerializeField] private float offWireTolerance = 0.015f;
 
         [Header("Wand")]
         [SerializeField] private BuzzWand wand;
@@ -32,6 +35,7 @@ namespace MotionArcade.Games.BuzzWire
         [SerializeField] private AudioSource sfx;
         [SerializeField] private AudioClip checkpointClip;
         [SerializeField] private AudioClip finishClip;
+        [SerializeField] private AudioClip offWireClip;
 
         private readonly WireProgress progress = new WireProgress();
         private int current;
@@ -41,6 +45,8 @@ namespace MotionArcade.Games.BuzzWire
         private float hapticTimer;
         private bool returnWand;
         private int shownTouches = -1;
+        private int shownPercent = -1;
+        private bool wasOnWire;
 
         private WireTrack Track => tracks[current];
 
@@ -104,6 +110,8 @@ namespace MotionArcade.Games.BuzzWire
                 ReturnWand();
                 Track.ShowMarkers(0f, false, 0f);
                 ShowTouches(0);
+                ShowProgress(0f);
+                wasOnWire = false;
             }
         }
 
@@ -143,8 +151,10 @@ namespace MotionArcade.Games.BuzzWire
             Vector3 center = ring.position;
             float t = track.Nearest(center, out Vector3 nearest);
             float distance = Vector3.Distance(center, nearest);
-            // לא צריך לבדוק שהשרביט ביד: שרביט שלא מוחזק עומד בעמדה שלו, רחוק מכל חוט
-            bool threaded = distance < wand.RingRadius;
+            // לא צריך לבדוק שהשרביט ביד: שרביט שלא מוחזק עומד בעמדה שלו, רחוק מכל חוט.
+            // החוט מחוץ ללולאה אבל קרוב ("מחליק"): נגיעה, וההתקדמות נעצרת; רק רחוק יותר זו יציאה מהחוט.
+            bool slipping = distance >= wand.RingRadius;
+            bool threaded = distance < wand.RingRadius + offWireTolerance;
 
             // מגע: נקודות על החוט סביב הנקודה הקרובה, כל 4 מ"מ, 1.6 ס"מ לכל כיוון
             bool touching = false;
@@ -158,7 +168,12 @@ namespace MotionArcade.Games.BuzzWire
                 }
             }
 
-            progress.Update(threaded, t, touching, Time.time);
+            // מחליק: נגיעה, ובלי התקדמות (אחרת אפשר היה להתקדם כשהחוט מחוץ ללולאה)
+            if (slipping) touching = true;
+            progress.Update(threaded, t, touching, Time.time, advance: !slipping);
+
+            if (wasOnWire && !progress.OnWire && !progress.Finished) HandleOffWire();
+            wasOnWire = progress.OnWire;
 
             if (progress.OnWire)
             {
@@ -169,6 +184,7 @@ namespace MotionArcade.Games.BuzzWire
             int target = progress.Score;
             if (target != Score) AddScore(target - Score);
             ShowTouches(progress.Touches);
+            ShowProgress(progress.Best);
             Feedback(progress.Touching && progress.OnWire);
             track.ShowMarkers(progress.Checkpoint, !progress.OnWire, Time.time);
 
@@ -193,6 +209,22 @@ namespace MotionArcade.Games.BuzzWire
             if (hapticTimer > 0f) return;
             hapticTimer = 0.1f;
             Haptics.Pulse(wand.Holder, Haptics.Medium, 0.1f);
+        }
+
+        // הטבעת יצאה מהחוט: אסור שזה יעבור בשקט (גיא הגיע לסוף ולא הבין למה לא קרה כלום)
+        private void HandleOffWire()
+        {
+            Feedback(false);
+            if (sfx != null && offWireClip != null) sfx.PlayOneShot(offWireClip);
+            Haptics.Pulse(wand.Holder, Haptics.Strong, 0.25f);
+        }
+
+        private void ShowProgress(float best)
+        {
+            int percent = (int)(best * 100f + 0.0001f);
+            if (percent == shownPercent || progressDisplay == null) return;
+            shownPercent = percent;
+            progressDisplay.SetText("{0}%", percent);
         }
 
         private void HandleCheckpoint(float checkpoint)

@@ -64,7 +64,15 @@ namespace MotionArcade.Tests
                 Assert.That(dart, Is.Not.Null);
                 var body = dart.GetComponent<Rigidbody>();
                 Assert.That(body.collisionDetectionMode, Is.EqualTo(CollisionDetectionMode.ContinuousDynamic), dart.name);
-                Assert.That(dart.GetComponent<XRGrabInteractable>().throwOnDetach, Is.True, dart.name);
+                var grab = dart.GetComponent<XRGrabInteractable>();
+                Assert.That(grab.throwOnDetach, Is.False, dart.name + ": ControllerThrow throws, not XRI");
+                Assert.That(dart.GetComponent<MotionArcade.Interaction.ControllerThrow>(), Is.Not.Null, dart.name);
+                Assert.That(dart.GetComponent<MotionArcade.Interaction.NearOnlyGrab>(), Is.Not.Null, dart.name);
+                // תמיד באמצע הגוף, החוד קדימה: ה-Grip על ציר החץ ובלי סיבוב
+                Assert.That(grab.useDynamicAttach, Is.False, dart.name);
+                Assert.That(grab.attachTransform.localPosition.x, Is.EqualTo(0f).Within(1e-4f));
+                Assert.That(grab.attachTransform.localPosition.y, Is.EqualTo(0f).Within(1e-4f));
+                Assert.That(Quaternion.Angle(grab.attachTransform.localRotation, Quaternion.identity), Is.LessThan(0.1f), dart.name + ": tip forward");
                 var slot = (Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue;
                 Assert.That(holder.Contains(slot.position), Is.True, $"slot {i} outside the holder bounds");
                 Assert.That(Vector3.Angle(slot.forward, Vector3.forward), Is.LessThan(1f), "darts lie pointing at the board");
@@ -89,7 +97,7 @@ namespace MotionArcade.Tests
             var idle = (Transform)dso.FindProperty("idlePose").objectReferenceValue;
             var running = (Transform)dso.FindProperty("runningPose").objectReferenceValue;
             Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(running.position.x), Is.GreaterThan(0.85f));
+            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
             // הלוח המרכזי לא מסתיר את מרכז לוח החצים מעין בגובה 1.6 מ'
             var rt = (RectTransform)dock.transform;
             float topEdge = idle.position.y + rt.rect.height * rt.lossyScale.y * 0.5f;
