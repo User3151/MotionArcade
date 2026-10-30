@@ -6293,6 +6293,7 @@ Transform:
   - {fileID: 407141190}
   - {fileID: 132827284}
   - {fileID: 360130852}
+  - {fileID: 1834513035}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1433841197
@@ -7875,6 +7876,62 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
   maxDistance: 0.12
+--- !u!1 &1834513034
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1834513035}
+  - component: {fileID: 1834513036}
+  m_Layer: 0
+  m_Name: Tension Music
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1834513035
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1834513034}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1433841196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1834513036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1834513034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d97e07c50ad9aff408812a6ba1cd85e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.TensionMusic
+  station: {fileID: 1433841195}
+  layers:
+  - {fileID: 8300000, guid: 86398d03dfb87c94e8cecc9ac7449f21, type: 3}
+  - {fileID: 8300000, guid: 2836ca4f8eb0a9641b95c65f1efdd859, type: 3}
+  - {fileID: 8300000, guid: 58e89c2f903933249b704566041c164f, type: 3}
+  - {fileID: 8300000, guid: 268fc41a06ba96943b146325a2bb1a94, type: 3}
+  tick: {fileID: 8300000, guid: 322177cea9a3b6045b9907211c2f6ac6, type: 3}
+  output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
+  volume: 0.7
+  tickVolume: 0.6
+  layerFade: 1.5
+  stopFade: 0.5
 --- !u!1 &1856309140
 GameObject:
   m_ObjectHideFlags: 0
