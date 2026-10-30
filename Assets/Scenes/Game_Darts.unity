@@ -167,6 +167,7 @@ GameObject:
   - component: {fileID: 48721655}
   - component: {fileID: 48721663}
   - component: {fileID: 48721662}
+  - component: {fileID: 48721664}
   m_Layer: 0
   m_Name: Dart Yellow
   m_TagString: Untagged
@@ -535,6 +536,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
   maxDistance: 0.12
+--- !u!114 &48721664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 48721654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 1
 --- !u!1 &150940444
 GameObject:
   m_ObjectHideFlags: 0
@@ -1757,6 +1771,7 @@ GameObject:
   - component: {fileID: 331596828}
   - component: {fileID: 331596830}
   - component: {fileID: 331596829}
+  - component: {fileID: 331596831}
   m_Layer: 0
   m_Name: Dart Blue
   m_TagString: Untagged
@@ -2125,6 +2140,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
   maxDistance: 0.12
+--- !u!114 &331596831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331596821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 1
 --- !u!1 &339697377
 GameObject:
   m_ObjectHideFlags: 0
@@ -5074,6 +5102,7 @@ GameObject:
   - component: {fileID: 973401506}
   - component: {fileID: 973401508}
   - component: {fileID: 973401507}
+  - component: {fileID: 973401509}
   m_Layer: 0
   m_Name: Dart Red
   m_TagString: Untagged
@@ -5442,6 +5471,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
   maxDistance: 0.12
+--- !u!114 &973401509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 973401499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 1
 --- !u!1 &1025470408
 GameObject:
   m_ObjectHideFlags: 0

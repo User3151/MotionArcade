@@ -9148,6 +9148,7 @@ GameObject:
   - component: {fileID: 1463663361}
   - component: {fileID: 1463663358}
   - component: {fileID: 1463663360}
+  - component: {fileID: 1463663366}
   m_Layer: 0
   m_Name: Mallet Left
   m_TagString: Untagged
@@ -9492,6 +9493,19 @@ CapsuleCollider:
   m_Height: 0.3
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0.15}
+--- !u!114 &1463663366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1463663357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 0
 --- !u!1 &1466059031
 GameObject:
   m_ObjectHideFlags: 0
@@ -12665,6 +12679,7 @@ GameObject:
   - component: {fileID: 1997446180}
   - component: {fileID: 1997446177}
   - component: {fileID: 1997446179}
+  - component: {fileID: 1997446185}
   m_Layer: 0
   m_Name: Mallet Right
   m_TagString: Untagged
@@ -13009,6 +13024,19 @@ CapsuleCollider:
   m_Height: 0.3
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0.15}
+--- !u!114 &1997446185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1997446176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 0
 --- !u!1 &2022235755
 GameObject:
   m_ObjectHideFlags: 0

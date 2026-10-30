@@ -4538,6 +4538,7 @@ GameObject:
   - component: {fileID: 1037999908}
   - component: {fileID: 1037999914}
   - component: {fileID: 1037999915}
+  - component: {fileID: 1037999916}
   m_Layer: 0
   m_Name: Wand
   m_TagString: Untagged
@@ -4965,6 +4966,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.NearOnlyGrab
   maxDistance: 0.12
+--- !u!114 &1037999916
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037999907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3786a05c910edcd4484b5e46a8c94229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
+  shape: 0
 --- !u!1 &1075993113
 GameObject:
   m_ObjectHideFlags: 0
