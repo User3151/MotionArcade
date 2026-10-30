@@ -81,10 +81,11 @@ namespace MotionArcade.Tests
                 Assert.That(grab.useDynamicAttach, Is.False, ball.name);
                 Assert.That(grab.attachTransform, Is.Not.Null.And.Not.SameAs(ball.transform), ball.name);
                 Assert.That(ball.GetComponent<SphereCollider>().sharedMaterial, Is.Not.Null, ball.name + " has no physic material");
-                // מהמדידה: מהירות מהבקר (לא מהכדור, שהצלפת היד הוסיפה לו 33%), כפול 1.3, וסיבוב לאחור
+                // מהמדידה: מהירות מהבקר (לא מהכדור, שהצלפת היד הוסיפה לו 33%), וסיבוב לאחור.
+                // המכפיל: 1.3 בסשן השני יצא 20% חזק מדי בממוצע (46 זריקות), אז 1.1
                 var thrower = new SerializedObject(ball.GetComponent<MotionArcade.Interaction.ControllerThrow>());
                 Assert.That(thrower.FindProperty("source").enumValueIndex, Is.EqualTo(0), ball.name);
-                Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1.3f).Within(1e-4f), ball.name);
+                Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1.1f).Within(1e-4f), ball.name);
                 Assert.That(thrower.FindProperty("backspin").floatValue, Is.GreaterThan(0f), ball.name);
             }
         }
@@ -104,17 +105,25 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void HoopHasBothSensors_PointingAtTheGame()
+        public void BasketCheck_UsesTheRealRim()
         {
-            var triggers = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<HoopTrigger>(true)).ToArray();
-            Assert.That(triggers.Length, Is.EqualTo(2));
-            var levels = triggers.Select(t => new SerializedObject(t).FindProperty("level").enumValueIndex).OrderBy(x => x).ToArray();
-            Assert.That(levels, Is.EqualTo(new[] { 0, 1 }), "one Top and one Bottom");
-            foreach (var t in triggers)
+            // הסל נבדק במישור הטבעת, ברדיוס שלה: מרכז ה-Transform חייב להיות מרכז הטבעת, בלי scale ובלי הטיה
+            var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
+            Assert.That(ring, Is.Not.Null);
+            Assert.That(ring.lossyScale.x, Is.EqualTo(1f).Within(1e-4f), "the radius is in metres");
+            Assert.That(Vector3.Angle(ring.up, Vector3.up), Is.LessThan(0.5f));
+            var rim = ring.GetComponentsInChildren<CapsuleCollider>().Where(c => c.name.StartsWith("Rim")).ToArray();
+            Assert.That(rim.Length, Is.GreaterThanOrEqualTo(12));
+            float radius = Game.FindProperty("ringRadius").floatValue;
+            foreach (var c in rim)
             {
-                Assert.That(new SerializedObject(t).FindProperty("game").objectReferenceValue, Is.SameAs(game));
-                Assert.That(t.GetComponent<Collider>().isTrigger, Is.True);
+                Vector3 p = ring.InverseTransformPoint(c.transform.position);
+                Assert.That(new Vector2(p.x, p.z).magnitude, Is.EqualTo(radius).Within(0.005f), c.name);
+                Assert.That(p.y, Is.EqualTo(0f).Within(0.005f), c.name);
             }
+            // החיישנים הישנים (מעל ומתחת לטבעת) הוסרו: כדור שעבר בטבעת פספס את התחתון ולא נספר
+            Assert.That(ring.Find("Sensor Top"), Is.Null);
+            Assert.That(ring.Find("Sensor Bottom"), Is.Null);
         }
 
         [Test]

@@ -1,68 +1,59 @@
 using MotionArcade.Games.Basketball;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace MotionArcade.Tests
 {
+    // סל = מרכז הכדור חוצה את מישור הטבעת כלפי מטה, בתוך הטבעת (מרחב הטבעת: y למעלה, מישור ב-y=0)
     public class BasketDetectorTests
     {
+        private const float R = 0.229f;
+
+        private static BasketDetector.Crossing Through(Vector3 a, Vector3 b) => BasketDetector.Through(a, b, R);
+
         [Test]
-        public void FallingThroughTopThenBottom_IsABasket()
+        public void FallingThroughTheMiddle_IsABasket()
         {
-            var d = new BasketDetector(1f);
-            d.EnterTop(1, 10.0f, -3f);
-            Assert.That(d.EnterBottom(1, 10.2f, -3.2f), Is.True);
+            Assert.That(Through(new Vector3(0f, 0.03f, 0.02f), new Vector3(0f, -0.04f, 0.04f)), Is.EqualTo(BasketDetector.Crossing.Down));
         }
 
         [Test]
-        public void OnlyCountsOnce()
+        public void CleanSwishWithSidewaysSpeed_IsABasket()
         {
-            var d = new BasketDetector(1f);
-            d.EnterTop(1, 10f, -3f);
-            Assert.That(d.EnterBottom(1, 10.1f, -3f), Is.True);
-            Assert.That(d.EnterBottom(1, 10.15f, -3f), Is.False, "bouncing inside the net must not score again");
+            // מהמשחק של גיא: חצה 7 ס"מ מהמרכז בדרך לצד, ונסחף ל-19 ס"מ עד הגובה של החיישן התחתון הישן
+            Assert.That(Through(new Vector3(0.05f, 0.02f, 0.04f), new Vector3(0.06f, -0.05f, 0.07f)), Is.EqualTo(BasketDetector.Crossing.Down));
         }
 
         [Test]
-        public void ComingUpFromBelow_IsNotABasket()
+        public void FallingOutsideTheRing_IsNot()
         {
-            var d = new BasketDetector(1f);
-            Assert.That(d.EnterBottom(1, 10f, 4f), Is.False);
-            d.EnterTop(1, 10.1f, 3.5f);
-            Assert.That(d.EnterBottom(1, 10.2f, 3f), Is.False);
+            // נופל מאחורי הטבעת, בין הטבעת ללוח
+            Assert.That(Through(new Vector3(0f, 0.03f, 0.33f), new Vector3(0f, -0.04f, 0.34f)), Is.EqualTo(BasketDetector.Crossing.None));
+            Assert.That(Through(new Vector3(-0.36f, 0.02f, 0f), new Vector3(-0.37f, -0.05f, 0f)), Is.EqualTo(BasketDetector.Crossing.None));
         }
 
         [Test]
-        public void BottomWithoutTop_IsNotABasket()
+        public void UsesTheCrossingPoint_NotTheSamples()
         {
-            // נפל מחוץ לטבעת ונכנס לחיישן התחתון מהצד
-            Assert.That(new BasketDetector(1f).EnterBottom(1, 5f, -2f), Is.False);
+            // שתי הדגימות מחוץ לטבעת (צעד ארוך באלכסון), אבל החצייה עצמה במרכז
+            Assert.That(Through(new Vector3(0f, 0.05f, -0.25f), new Vector3(0f, -0.05f, 0.25f)), Is.EqualTo(BasketDetector.Crossing.Down));
+            // הגבול: הנקודה שבה המישור נחצה, ליד שפת הטבעת (22.9 ס"מ)
+            Assert.That(Through(new Vector3(0f, 0.01f, 0.20f), new Vector3(0f, -0.09f, 0.40f)), Is.EqualTo(BasketDetector.Crossing.Down), "crossed at 22 cm");
+            Assert.That(Through(new Vector3(0f, 0.01f, 0.22f), new Vector3(0f, -0.09f, 0.42f)), Is.EqualTo(BasketDetector.Crossing.None), "crossed at 24 cm");
         }
 
         [Test]
-        public void RimOutThenLate_IsNotABasket()
+        public void ComingUpFromBelow_IsUp()
         {
-            // נגע בחיישן העליון, קפץ מהטבעת החוצה, ורק אחרי יותר משנייה הגיע לתחתון (למשל בדרך חזרה במסילה)
-            var d = new BasketDetector(1f);
-            d.EnterTop(1, 10f, -2f);
-            Assert.That(d.EnterBottom(1, 11.5f, -2f), Is.False);
+            Assert.That(Through(new Vector3(0f, -0.03f, 0f), new Vector3(0f, 0.04f, 0f)), Is.EqualTo(BasketDetector.Crossing.Up));
         }
 
         [Test]
-        public void BallsAreTrackedSeparately()
+        public void NotCrossing_IsNone()
         {
-            var d = new BasketDetector(1f);
-            d.EnterTop(1, 10f, -3f);
-            Assert.That(d.EnterBottom(2, 10.1f, -3f), Is.False, "ball 2 never passed the top");
-            Assert.That(d.EnterBottom(1, 10.2f, -3f), Is.True);
-        }
-
-        [Test]
-        public void Forget_DropsArmedBall()
-        {
-            var d = new BasketDetector(1f);
-            d.EnterTop(1, 10f, -3f);
-            d.Forget(1);   // נתפס ביד בדרך
-            Assert.That(d.EnterBottom(1, 10.1f, -3f), Is.False);
+            Assert.That(Through(new Vector3(0f, 0.30f, 0f), new Vector3(0f, 0.20f, 0f)), Is.EqualTo(BasketDetector.Crossing.None), "still above");
+            Assert.That(Through(new Vector3(0f, -0.10f, 0f), new Vector3(0f, -0.20f, 0f)), Is.EqualTo(BasketDetector.Crossing.None), "already below");
+            Assert.That(Through(Vector3.zero, Vector3.zero), Is.EqualTo(BasketDetector.Crossing.None), "resting on the plane");
         }
     }
 

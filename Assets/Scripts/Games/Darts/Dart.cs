@@ -22,7 +22,9 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private float embedDepth = 0.012f;     // כמה החוד שוקע בלוח
         [SerializeField] private float maxStickAngle = 65f;
         [SerializeField] private float minStickSpeed = 1.5f;
-        [SerializeField] private float alignSpeed = 400f;       // מעלות לשנייה: 40° של היד מתיישרים ב-0.1 ש', הרבה לפני הלוח
+        // מעלות לשנייה. החץ מוחזק מאוזן בזמן הכיוון, וביד שהוטתה קדימה בזריקה הוא יוצא עד 60° מכיוון התעופה:
+        // ב-720°/ש' זה מתיישר תוך 0.08 ש', ברבע הראשון של הדרך ללוח
+        [SerializeField] private float alignSpeed = 720f;
 
         private Rigidbody body;
         private XRGrabInteractable grab;

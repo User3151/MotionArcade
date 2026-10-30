@@ -243,6 +243,32 @@ namespace MotionArcade.Tests
             Assert.That(Cell("result"), Is.Empty);
             Assert.That(Cell("hand_speed"), Is.EqualTo("4.000"));
             Assert.That(Cell("crossed"), Is.EqualTo("0"));
+            Assert.That(Cell("aim_found"), Is.EqualTo("0"));
+            Assert.That(Cell("aim_hand_pitch"), Is.Empty);
+        }
+
+        [Test]
+        public void Csv_AimPose_WhereTheControllerAndTheDartPointed()
+        {
+            // בכיוון הבקר הצביע 50° למעלה, והחץ ישב ביד 50° מתחת לקרן: החץ היה מאוזן
+            ThrowRecord r = Sample();
+            r.Release.AimFound = true;
+            r.Release.AimSecondsBefore = 0.42f;
+            r.Release.AimHandRotation = Quaternion.Euler(-50f, 0f, 0f);
+            r.Release.ObjectInHand = Quaternion.Euler(50f, 0f, 0f);
+            var sb = new StringBuilder();
+            ThrowCsv.Append(sb, "darts", r);
+            string[] cells = sb.ToString().TrimEnd('\n').Split(',');
+            string[] header = ThrowCsv.Header.Split(',');
+            Assert.That(cells.Length, Is.EqualTo(header.Length));
+            string Cell(string column) => cells[System.Array.IndexOf(header, column)];
+            Assert.That(Cell("aim_found"), Is.EqualTo("1"));
+            Assert.That(Cell("aim_before_ms"), Is.EqualTo("420"));
+            float Value(string column) => float.Parse(Cell(column), CultureInfo.InvariantCulture);
+            Assert.That(Value("aim_hand_pitch"), Is.EqualTo(50f).Within(0.11f));
+            Assert.That(Value("aim_obj_pitch"), Is.EqualTo(0f).Within(0.11f));
+            Assert.That(Value("grip_pitch"), Is.EqualTo(-50f).Within(0.11f));
+            Assert.That(Cell("result_y_cm"), Is.EqualTo("10.0"), "the column before the new ones is unchanged");
         }
 
         private static ThrowRecord Sample() => new ThrowRecord

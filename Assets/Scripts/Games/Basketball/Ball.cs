@@ -8,6 +8,8 @@ namespace MotionArcade.Games.Basketball
 {
     // כדור כדורסל. הזריקה עצמה ב-ControllerThrow; כאן רק:
     // - זוכרים מי זרק אותו אחרון, כדי לרטוט ביד הנכונה כשהוא נכנס לסל,
+    // - בכל צעד פיזיקה מעבירים למשחק את המרכז הקודם והנוכחי, לבדיקת סל. כל זריקה נספרת פעם אחת לכל היותר,
+    //   ומתחדשת כשהכדור נתפס שוב או חוזר למגש,
     // - מחזירים אותו למגש אם הוא יצא מהמכונה או נתקע (על הלוח, על הטבעת), כי השחקן לא יכול ללכת להביא אותו.
     [RequireComponent(typeof(Rigidbody), typeof(XRGrabInteractable))]
     public class Ball : MonoBehaviour
@@ -21,8 +23,10 @@ namespace MotionArcade.Games.Basketball
         private BasketballGame game;
         private float outsideTimer;
         private float stillTimer;
+        private Vector3 previous;
+        private bool hasPrevious;   // false אחרי תפיסה והצבה: אין "צעד קודם" אמיתי להשוות אליו
+        private bool ringDone;      // הזריקה הזו כבר נספרה (או עלתה דרך הטבעת מלמטה)
 
-        public int Id { get; private set; }
         public bool IsHeld => grab.isSelected;
         public Vector3 Velocity => body.linearVelocity;
         public IXRInteractor LastHolder { get; private set; }
@@ -31,7 +35,6 @@ namespace MotionArcade.Games.Basketball
         {
             body = GetComponent<Rigidbody>();
             grab = GetComponent<XRGrabInteractable>();
-            Id = GetInstanceID();
         }
 
         private void OnEnable()
@@ -54,7 +57,7 @@ namespace MotionArcade.Games.Basketball
             LastHolder = args.interactorObject;
             outsideTimer = 0f;
             stillTimer = 0f;
-            if (game != null) game.ForgetBall(this);   // כדור שנתפס באמצע הדרך מתחיל מחדש מבחינת זיהוי הסל
+            ringDone = false;   // זריקה חדשה
             Haptics.Pulse(args.interactorObject, Haptics.Light, 0.04f);
         }
 
@@ -63,11 +66,16 @@ namespace MotionArcade.Games.Basketball
             if (game == null || IsHeld)
             {
                 outsideTimer = stillTimer = 0f;
+                hasPrevious = false;
                 return;
             }
 
             Vector3 position = body.position;
             float dt = Time.fixedDeltaTime;
+
+            if (hasPrevious && !ringDone) ringDone = game.CheckRing(this, previous, position);
+            previous = position;
+            hasPrevious = true;
 
             outsideTimer = game.InsideMachine(position) ? 0f : outsideTimer + dt;
             stillTimer = body.linearVelocity.sqrMagnitude < stillSpeed * stillSpeed && !game.InTray(position) ? stillTimer + dt : 0f;
@@ -85,6 +93,8 @@ namespace MotionArcade.Games.Basketball
             body.position = position;
             transform.position = position;
             outsideTimer = stillTimer = 0f;
+            hasPrevious = false;   // בלי זה הקפיצה עצמה (מהלוח למגש) הייתה נבדקת כתנועה
+            ringDone = false;
         }
     }
 }

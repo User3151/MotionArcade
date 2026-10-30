@@ -44,6 +44,16 @@ namespace MotionArcade.Games.Darts
         private float returnAllTimer;
 
         public DartBoard Board => board;
+
+        // לאן השחקן מכוון עכשיו: אמצע הטבעת החיצונית של המקטע (השטח הכי גדול), או מרכז הלוח לבול
+        public Vector3 AimPoint
+        {
+            get
+            {
+                int target = progress.Target;
+                return target >= 1 && target <= 20 ? board.WorldPointOf(target, 0.135f) : board.transform.position;
+            }
+        }
         public int Target => progress.Target;
 
         public override string PlayingHint => Phase == RoundPhase.Playing && !progress.IsFinished ? hints[Target] : null;
@@ -128,12 +138,7 @@ namespace MotionArcade.Games.Darts
         private void ShowTarget()
         {
             int target = progress.Target;
-            if (recorder != null)
-            {
-                // נקודת כיוון למדידה: אמצע הטבעת החיצונית של המקטע (השטח הכי גדול), או מרכז הלוח לבול
-                bool number = target >= 1 && target <= 20;
-                recorder.SetAim(number ? board.WorldPointOf(target, 0.135f) : board.transform.position, target);
-            }
+            if (recorder != null) recorder.SetAim(AimPoint, target);
             if (targetDisplay != null)
             {
                 if (target == AroundTheClock.Bull) targetDisplay.SetText("BULL");

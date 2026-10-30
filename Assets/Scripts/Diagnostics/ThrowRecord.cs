@@ -39,7 +39,8 @@ namespace MotionArcade.Diagnostics
             "hand_speed,hand_pitch,hand_yaw,dev_speed,dev_pitch,dev_yaw," +
             "peak_hand_speed,peak_before_ms,select_drop_ms,axis_vs_flight_deg,hand_fwd_pitch,flight_in_hand_pitch,flight_in_hand_yaw," +
             "need_speed,speed_ratio,aim_yaw_err,crossed,cross_x_cm,cross_y_cm,aim_x_cm,aim_y_cm,err_x_cm,err_y_cm,apex_y," +
-            "target,result,result_x_cm,result_y_cm";
+            "target,result,result_x_cm,result_y_cm," +
+            "aim_found,aim_before_ms,aim_hand_pitch,aim_hand_yaw,aim_obj_pitch,aim_obj_yaw,grip_pitch,grip_yaw";
 
         public static void Append(StringBuilder sb, string game, in ThrowRecord r)
         {
@@ -87,10 +88,23 @@ namespace MotionArcade.Diagnostics
             sb.Append(r.AimNumber).Append(',').Append(r.Result ?? "").Append(',');
             if (r.HasResultPoint)
             {
-                Num(sb, r.ResultPoint.x * 100f, "0.0");
-                Num(sb, r.ResultPoint.y * 100f, "0.0", last: true);
+                Num(sb, r.ResultPoint.x * 100f, "0.0"); Num(sb, r.ResultPoint.y * 100f, "0.0");
             }
-            else sb.Append(',');
+            else sb.Append(",,");
+
+            // רגע הכיוון (העצירה שלפני הזריקה): לאן הבקר והחפץ הצביעו בו, ואיך החפץ ישב ביד
+            sb.Append(t.AimFound ? "1," : "0,");
+            if (t.AimFound)
+            {
+                Vector3 hand = t.AimHandRotation * Vector3.forward;
+                Vector3 obj = t.AimHandRotation * t.ObjectInHand * Vector3.forward;
+                Num(sb, t.AimSecondsBefore * 1000f, "0");
+                Num(sb, ThrowMath.PitchOf(hand), "0.0"); Num(sb, ThrowMath.YawOf(hand), "0.0");
+                Num(sb, ThrowMath.PitchOf(obj), "0.0"); Num(sb, ThrowMath.YawOf(obj), "0.0");
+            }
+            else sb.Append(",,,,,");
+            Vector3 grip = t.ObjectInHand * Vector3.forward;
+            Num(sb, ThrowMath.PitchOf(grip), "0.0"); Num(sb, ThrowMath.YawOf(grip), "0.0", last: true);
             sb.Append('\n');
         }
 

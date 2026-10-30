@@ -1,43 +1,32 @@
-using System.Collections.Generic;
+using UnityEngine;
 
 namespace MotionArcade.Games.Basketball
 {
     // מחליט מה נחשב סל, בלי Unity, כדי שאפשר יהיה לבדוק את זה בבדיקות EditMode.
-    // שני חיישנים: אחד ממש מעל הטבעת ואחד מתחתיה. סל = הכדור נכנס לעליון בתנועה כלפי מטה,
-    // ואחר כך לתחתון (עדיין כלפי מטה) תוך זמן קצר. כך לא נספר:
-    // - כדור שעולה דרך הטבעת מלמטה,
-    // - כדור שנגע בחיישן העליון, קפץ מהטבעת ונפל בחוץ,
-    // - כדור שנופל לתחתון מהצד (מעבר לטבעת) בלי לעבור בעליון.
-    public class BasketDetector
+    // סל = מרכז הכדור חוצה את מישור הטבעת כלפי מטה, בתוך הטבעת. אין טווח ביניים: כדור שמרכזו במישור הטבעת,
+    // רחוק מהציר פחות מהטבעת אבל יותר מ-(טבעת פחות רדיוס הכדור), נוגע בה, והפיזיקה לא נותנת לו להישאר שם.
+    // לכן כל חצייה בתוך הטבעת היא כדור שעובר בה, וכדור שנופל מבחוץ חוצה רחוק ממנה.
+    // קודם היו כאן שני חיישנים, מעל הטבעת ו-32 ס"מ מתחתיה. לרשת אין פיזיקה, אז כדור שעבר בטבעת עם מהירות
+    // לצד נסחף עד שהגיע לגובה התחתון, פספס אותו (16 ס"מ), ולא נספר. גיא ראה סלים נקיים שלא נספרו.
+    public static class BasketDetector
     {
-        private readonly float windowSeconds;
-        // כדור → הזמן שנכנס לעליון. קיבולת מראש: מילון ריק מקצה זיכרון בפעם הראשונה שכל כדור חדש נכנס,
-        // וזה היה קורה באמצע סבב (נמדד ב-GcProbe)
-        private readonly Dictionary<int, float> armedAt = new Dictionary<int, float>(16);
+        public enum Crossing { None, Down, Up }
 
-        public BasketDetector(float windowSeconds = 1f)
+        // previous, current: מרכז הכדור במרחב של הטבעת (y למעלה, מישור הטבעת ב-y=0) בשני צעדי פיזיקה רצופים.
+        // radius: רדיוס הטבעת (עד מרכז הצינור שלה).
+        public static Crossing Through(Vector3 previous, Vector3 current, float radius)
         {
-            this.windowSeconds = windowSeconds;
-        }
+            bool down = previous.y > 0f && current.y <= 0f;
+            bool up = previous.y <= 0f && current.y > 0f;
+            if (!down && !up) return Crossing.None;
 
-        // ballId: מזהה קבוע לכל כדור. verticalSpeed: שלילי = נופל.
-        public void EnterTop(int ballId, float time, float verticalSpeed)
-        {
-            if (verticalSpeed < 0f) armedAt[ballId] = time;
-            else armedAt.Remove(ballId);   // עולה דרך הטבעת: לא יכול להיות סל
+            // איפה בדיוק הכדור חצה את המישור, בין שתי הדגימות (בצעד אחד הוא עובר 7 ס"מ)
+            float t = previous.y / (previous.y - current.y);
+            float x = previous.x + (current.x - previous.x) * t;
+            float z = previous.z + (current.z - previous.z) * t;
+            if (x * x + z * z > radius * radius) return Crossing.None;
+            return down ? Crossing.Down : Crossing.Up;
         }
-
-        // true = סל
-        public bool EnterBottom(int ballId, float time, float verticalSpeed)
-        {
-            if (!armedAt.TryGetValue(ballId, out float armed)) return false;
-            armedAt.Remove(ballId);
-            return verticalSpeed < 0f && time - armed <= windowSeconds;
-        }
-
-        // כדור שחזר למגש או סבב חדש: מוחקים מצב ישן
-        public void Forget(int ballId) => armedAt.Remove(ballId);
-        public void Clear() => armedAt.Clear();
     }
 
     public static class BasketballScoring

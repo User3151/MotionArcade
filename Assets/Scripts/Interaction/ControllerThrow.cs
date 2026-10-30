@@ -28,6 +28,13 @@ namespace MotionArcade.Interaction
         public float HandPeakSpeed;       // המהירות הכי גבוהה של הבקר ב-0.3 השניות האחרונות
         public float PeakSecondsBefore;   // כמה זמן לפני השחרור היה השיא
         public float SelectDropSeconds;   // מתי הכפתור התחיל להשתחרר (ירד מתחת ל-90% מהשיא) עד שהזריקה יצאה. NaN = לא ידוע
+
+        // רגע הכיוון: העצירה שלפני הזריקה (HandPoseHistory). AimFound = false אם היד לא עצרה (זריקה ברצף אחד).
+        public bool AimFound;
+        public float AimSecondsBefore;
+        public Vector3 AimHandPosition;      // נקודת האחיזה ביד, בעולם
+        public Quaternion AimHandRotation;   // נקודת האחיזה ביד, בעולם
+        public Quaternion ObjectInHand;      // הסיבוב של החפץ ביחס לנקודת האחיזה (קבוע כל זמן שהוא ביד)
     }
 
     // מתקנת זריקה לפני שהיא יוצאת (עזרת כיוון). מחזירה את המהירות החדשה.
@@ -48,6 +55,10 @@ namespace MotionArcade.Interaction
         public enum VelocitySource { HandPeak, Object }
 
         private const float MeasureWindow = 0.3f;
+        // רגע הכיוון: עצירה של 0.15 ש' לפחות, מתחת ל-0.25 מ'/ש', שנגמרה עד 1.5 ש' לפני השחרור
+        private const float AimLookBack = 1.5f;
+        private const float AimStill = 0.15f;
+        private const float AimSpeed = 0.25f;
 
         [SerializeField] private VelocitySource source = VelocitySource.HandPeak;
         [SerializeField] private float velocityScale = 1f;   // מכפיל לכל משחק, לפי מדידה (ראו הסבר למעלה)
@@ -58,6 +69,7 @@ namespace MotionArcade.Interaction
 
         private readonly ReleaseVelocity samples = new ReleaseVelocity(32);
         private readonly ReleaseVelocity handSamples = new ReleaseVelocity(64);   // בכל פריים, עד 120 בשנייה
+        private readonly HandPoseHistory poses = new HandPoseHistory(256, 1f / 120f);   // 2 שניות לפחות, בכל קצב פריימים
         private Rigidbody body;
         private XRGrabInteractable grab;
         private Vector3 pending;
@@ -104,6 +116,7 @@ namespace MotionArcade.Interaction
         {
             samples.Clear();
             handSamples.Clear();
+            poses.Clear();
             hand = args.interactorObject.transform;
             handAttach = args.interactorObject.GetAttachTransform(grab);
             input = args.interactorObject as XRBaseInputInteractor;
@@ -141,6 +154,8 @@ namespace MotionArcade.Interaction
             if (!grab.isSelected || hand == null) return;
             Vector3 p = hand.position;
             handSamples.Add(Time.time, p.x, p.y, p.z);
+            Transform grip = handAttach != null ? handAttach : hand;
+            poses.Add(Time.time, grip.position, grip.rotation);
 
             if (input != null) button.Update(Time.time, input.selectInput.ReadValue());
         }
@@ -248,6 +263,11 @@ namespace MotionArcade.Interaction
                 info.PeakSecondsBefore = before;
             }
             if (TryDeviceVelocity(out Vector3 device)) info.DeviceVelocity = device;
+
+            Transform grip = handAttach != null ? handAttach : hand;
+            info.ObjectInHand = grip != null ? Quaternion.Inverse(grip.rotation) * body.rotation : Quaternion.identity;
+            info.AimFound = poses.TryFindPause(Time.time, AimLookBack, AimStill, AimSpeed,
+                out info.AimHandPosition, out info.AimHandRotation, out info.AimSecondsBefore);
             return info;
         }
 

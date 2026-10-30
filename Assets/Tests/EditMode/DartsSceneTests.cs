@@ -72,14 +72,15 @@ namespace MotionArcade.Tests
                 Assert.That(grab.throwOnDetach, Is.False, dart.name + ": ControllerThrow throws, not XRI");
                 Assert.That(dart.GetComponent<MotionArcade.Interaction.ControllerThrow>(), Is.Not.Null, dart.name);
                 Assert.That(dart.GetComponent<MotionArcade.Interaction.NearOnlyGrab>(), Is.Not.Null, dart.name);
-                // תמיד באותה אחיזה: מרכז הקנה 1.5 ס"מ מעל נקודת האחיזה (בין האגודל לאצבע), והחוד 22° מתחת
-                // לקרן של הבקר. מהמדידה: הבקר הצביע 49° למעלה בזמן שהזריקות יצאו ב-26°.
+                // תמיד באותה אחיזה בהתחלה (DartGrip לומד ממנה): מרכז הקנה 1.5 ס"מ מעל נקודת האחיזה (בין האגודל
+                // לאצבע), והחוד 45° מתחת לקרן של הבקר, כך שהחץ מאוזן כשהבקר מצביע 45° למעלה.
                 Assert.That(grab.useDynamicAttach, Is.False, dart.name);
                 Quaternion r = grab.attachTransform.localRotation;
                 Vector3 barrelInHand = Quaternion.Inverse(r) * (new Vector3(0f, 0f, 0.025f) - grab.attachTransform.localPosition);
                 Assert.That(Vector3.Distance(barrelInHand, new Vector3(0f, 0.015f, 0f)), Is.LessThan(1e-3f), dart.name + " barrel in the fingers");
                 Vector3 tipInHand = Quaternion.Inverse(r) * Vector3.forward;
-                Assert.That(Vector3.Angle(tipInHand, Quaternion.Euler(22f, 0f, 0f) * Vector3.forward), Is.LessThan(0.5f), dart.name + ": tip 22° below the ray");
+                Assert.That(Vector3.Angle(tipInHand, Quaternion.Euler(45f, 0f, 0f) * Vector3.forward), Is.LessThan(0.5f), dart.name + ": tip 45° below the ray");
+                Assert.That(new SerializedObject(dart).FindProperty("alignSpeed").floatValue, Is.GreaterThanOrEqualTo(700f), dart.name + " turns to its flight fast");
                 var thrower = new SerializedObject(dart.GetComponent<MotionArcade.Interaction.ControllerThrow>());
                 Assert.That(thrower.FindProperty("source").enumValueIndex, Is.EqualTo(0), "speed from the hand's peak");
                 Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1f).Within(1e-4f));
@@ -87,6 +88,21 @@ namespace MotionArcade.Tests
                 Assert.That(holder.Contains(slot.position), Is.True, $"slot {i} outside the holder bounds");
                 Assert.That(Vector3.Angle(slot.forward, Vector3.forward), Is.LessThan(1f), "darts lie pointing at the board");
             }
+        }
+
+        [Test]
+        public void Grip_LearnsFromEveryDart_StartingAt45()
+        {
+            var grip = game.GetComponent<DartGrip>();
+            Assert.That(grip, Is.Not.Null, "the grip that adapts to how the player holds the controller");
+            var gso = new SerializedObject(grip);
+            Assert.That(gso.FindProperty("game").objectReferenceValue, Is.SameAs(game));
+            var darts = gso.FindProperty("darts");
+            var all = so.FindProperty("darts");
+            Assert.That(darts.arraySize, Is.EqualTo(all.arraySize));
+            for (int i = 0; i < all.arraySize; i++)
+                Assert.That(darts.GetArrayElementAtIndex(i).objectReferenceValue, Is.SameAs(all.GetArrayElementAtIndex(i).objectReferenceValue));
+            Assert.That(Vector3.Angle(grip.Default * Vector3.forward, Quaternion.Euler(45f, 0f, 0f) * Vector3.forward), Is.LessThan(0.5f));
         }
 
         [Test]

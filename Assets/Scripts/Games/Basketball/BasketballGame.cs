@@ -18,6 +18,10 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private Transform[] traySlots;      // לאן מחזירים כדור (מעל המגש)
         [SerializeField] private LayerMask ballLayers = ~0;
 
+        [Header("Hoop")]
+        [SerializeField] private Transform ring;                // מרכז הטבעת, y למעלה
+        [SerializeField] private float ringRadius = 0.229f;     // עד מרכז הצינור של הטבעת (רדיוס חוקי 22.9 ס"מ)
+
         [Header("Machine bounds (world space)")]
         [SerializeField] private Bounds machine;   // כל הנפח של המכונה, כולל מעל הסל. כדור מחוץ לזה = הלך לאיבוד
         [SerializeField] private Bounds tray;      // המגש: כדור שעומד כאן במקום שלו, לא "תקוע"
@@ -29,7 +33,6 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
         [SerializeField] private HoopAssist assist;        // עזרת כיוון לכל הכדורים
 
-        private readonly BasketDetector detector = new BasketDetector(1f);
         private readonly Collider[] overlap = new Collider[8];   // מוקצה פעם אחת: בדיקת מקום פנוי במגש בלי GC
 
         public override string PlayingHint =>
@@ -62,19 +65,16 @@ namespace MotionArcade.Games.Basketball
                 if (ball != null) ball.SetGrabbable(value);
         }
 
-        // סל שהתחיל להיספר בספירה לאחור (כדור באוויר) לא ממשיך לתוך הסבב
-        protected override void OnPlayingStarted() => detector.Clear();
+        protected override void OnPlayingStarted() { }
 
         private void ResetBalls()
         {
-            detector.Clear();
             // כל כדור שלא ביד מקבל משבצת משלו במגש, כדי שהסבב יתחיל עם כל הכדורים זמינים.
             // לא בודקים אם המשבצת פנויה: כל הכדורים זזים עכשיו, אז הם לא יכולים לחסום זה את זה.
             int slot = 0;
             foreach (Ball ball in balls)
             {
                 if (ball == null || ball.IsHeld) continue;
-                detector.Forget(ball.Id);
                 if (slot < traySlots.Length) ball.Teleport(traySlots[slot++].position);
                 else ball.Teleport(DropAboveTray());
             }
@@ -86,11 +86,19 @@ namespace MotionArcade.Games.Basketball
         public bool InsideMachine(Vector3 position) => machine.Contains(position);
         public bool InTray(Vector3 position) => tray.Contains(position);
 
-        public void HandleTop(Ball ball) => detector.EnterTop(ball.Id, Time.time, ball.Velocity.y);
-
-        public void HandleBottom(Ball ball)
+        // נקרא מכל כדור שלא ביד, בכל צעד פיזיקה, עם המרכז שלו בצעד הקודם ובנוכחי.
+        // true = הזריקה הזו נגמרה מבחינת סל: נספר סל, או שהכדור עלה דרך הטבעת מלמטה (אז הירידה שאחרי לא נספרת).
+        public bool CheckRing(Ball ball, Vector3 previous, Vector3 current)
         {
-            if (!detector.EnterBottom(ball.Id, Time.time, ball.Velocity.y)) return;
+            BasketDetector.Crossing crossing = BasketDetector.Through(
+                ring.InverseTransformPoint(previous), ring.InverseTransformPoint(current), ringRadius);
+            if (crossing == BasketDetector.Crossing.None) return false;
+            if (crossing == BasketDetector.Crossing.Down) Basket(ball);
+            return true;
+        }
+
+        private void Basket(Ball ball)
+        {
             if (recorder != null) recorder.NoteResult(ball.gameObject, "BASKET");
 
             int points = BasketballScoring.PointsFor(TimeLeft);
@@ -101,12 +109,9 @@ namespace MotionArcade.Games.Basketball
             if (counted && popup != null) popup.Show(points);
         }
 
-        public void ForgetBall(Ball ball) => detector.Forget(ball.Id);
-
         // מחזיר כדור לנקודה פנויה מעל המגש. כדור שמוצב בתוך כדור אחר נזרק על ידי הפיזיקה, לכן בודקים קודם.
         public void ReturnBall(Ball ball)
         {
-            detector.Forget(ball.Id);
             Vector3 target = DropAboveTray();   // אם אין משבצת פנויה
             for (int i = 0; i < traySlots.Length; i++)
             {
