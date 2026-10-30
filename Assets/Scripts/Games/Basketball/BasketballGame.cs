@@ -1,4 +1,5 @@
 using MotionArcade.Core;
+using MotionArcade.Diagnostics;
 using MotionArcade.Feedback;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private AudioSource hoopAudio;
         [SerializeField] private AudioClip basketClip;
         [SerializeField] private ScorePopup popup;
+        [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
 
         private readonly BasketDetector detector = new BasketDetector(1f);
         private readonly Collider[] overlap = new Collider[8];   // מוקצה פעם אחת: בדיקת מקום פנוי במגש בלי GC
@@ -83,6 +85,7 @@ namespace MotionArcade.Games.Basketball
         public void HandleBottom(Ball ball)
         {
             if (!detector.EnterBottom(ball.Id, Time.time, ball.Velocity.y)) return;
+            if (recorder != null) recorder.NoteResult(ball.gameObject, "BASKET");
 
             int points = BasketballScoring.PointsFor(TimeLeft);
             bool counted = AddScore(points);

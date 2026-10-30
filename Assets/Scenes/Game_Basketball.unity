@@ -6340,6 +6340,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1433841196}
   - component: {fileID: 1433841195}
+  - component: {fileID: 1433841197}
   m_Layer: 0
   m_Name: Basketball Game
   m_TagString: Untagged
@@ -6396,6 +6397,7 @@ MonoBehaviour:
   hoopAudio: {fileID: 505673390}
   basketClip: {fileID: 8300000, guid: a3f6745bfe3f48f428e5d58ca273092e, type: 3}
   popup: {fileID: 324113786}
+  recorder: {fileID: 1433841197}
 --- !u!4 &1433841196
 Transform:
   m_ObjectHideFlags: 0
@@ -6418,6 +6420,27 @@ Transform:
   - {fileID: 360130852}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1433841197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1433841194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cba16bd136a8f604bb2ecc039794fe27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Diagnostics.ThrowRecorder
+  station: {fileID: 1433841195}
+  throwables:
+  - {fileID: 352222330}
+  - {fileID: 745613539}
+  - {fileID: 759101356}
+  - {fileID: 1801573639}
+  target: {fileID: 505673389}
+  plane: 0
+  capacity: 512
 --- !u!1 &1434503603
 GameObject:
   m_ObjectHideFlags: 0

@@ -9314,6 +9314,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1905319198}
   - component: {fileID: 1905319197}
+  - component: {fileID: 1905319199}
   m_Layer: 0
   m_Name: Darts Game
   m_TagString: Untagged
@@ -9394,6 +9395,7 @@ MonoBehaviour:
   hitClip: {fileID: 8300000, guid: 78a7361e30bb55243adc19d6701e2652, type: 3}
   targetClip: {fileID: 8300000, guid: 24cff48c6ff508844bdebd71a6e1de18, type: 3}
   popup: {fileID: 1641469166}
+  recorder: {fileID: 1905319199}
 --- !u!4 &1905319198
 Transform:
   m_ObjectHideFlags: 0
@@ -9416,6 +9418,26 @@ Transform:
   - {fileID: 1825574697}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1905319199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905319196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cba16bd136a8f604bb2ecc039794fe27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Diagnostics.ThrowRecorder
+  station: {fileID: 1905319197}
+  throwables:
+  - {fileID: 48721662}
+  - {fileID: 331596829}
+  - {fileID: 973401507}
+  target: {fileID: 838217308}
+  plane: 1
+  capacity: 512
 --- !u!1 &1908170435
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
 using MotionArcade.Core;
+using MotionArcade.Diagnostics;
 using MotionArcade.Feedback;
 using TMPro;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private AudioClip hitClip;
         [SerializeField] private AudioClip targetClip;
         [SerializeField] private ScorePopup popup;
+        [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
 
         private static readonly Color HitColor = Color.white;
         private static readonly Color AdvanceColor = new Color(0.3f, 1f, 0.4f);
@@ -95,6 +97,8 @@ namespace MotionArcade.Games.Darts
         {
             DartHit hit = board.ScoreAt(point);
             bool advanced = Phase == RoundPhase.Playing && progress.Register(hit);
+            // לפני FinishRound: הסיום כותב את המדידה לקובץ
+            if (recorder != null) recorder.NoteResult(dart.gameObject, DartScoring.Label(hit), point);
 
             if (advanced)
             {
@@ -124,6 +128,12 @@ namespace MotionArcade.Games.Darts
         private void ShowTarget()
         {
             int target = progress.Target;
+            if (recorder != null)
+            {
+                // נקודת כיוון למדידה: אמצע הטבעת החיצונית של המקטע (השטח הכי גדול), או מרכז הלוח לבול
+                bool number = target >= 1 && target <= 20;
+                recorder.SetAim(number ? board.WorldPointOf(target, 0.135f) : board.transform.position, target);
+            }
             if (targetDisplay != null)
             {
                 if (target == AroundTheClock.Bull) targetDisplay.SetText("BULL");
