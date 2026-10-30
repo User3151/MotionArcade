@@ -82,21 +82,32 @@ namespace MotionArcade.Interaction
         // ושתי דגימות קרובות מדי בזמן נותנות מהירויות מטורפות.
         public bool TryPeakSpeed(float window, out float peak, out float secondsBefore, float span = 0.03f)
         {
-            peak = 0f;
+            bool found = TryPeakVelocity(window, out float vx, out float vy, out float vz, out secondsBefore, span);
+            peak = found ? (float)Math.Sqrt(vx * vx + vy * vy + vz * vz) : 0f;
+            return found;
+        }
+
+        // המהירות (כיוון וגודל) של הרגע הכי מהיר בחלון האחרון. לזריקה: בגיא, ברגע שהכפתור שוחרר היד כבר האטה
+        // ב-10%-16% מהשיא שלה כמה עשרות מילי-שניות קודם, והחלון של TryEstimate תפס את ההאטה (חצים יצאו נמוכים).
+        public bool TryPeakVelocity(float window, out float vx, out float vy, out float vz, out float secondsBefore, float span = 0.03f)
+        {
+            vx = vy = vz = 0f;
             secondsBefore = 0f;
             if (count < 3) return false;
 
             int newest = (head - 1 + times.Length) % times.Length;
             float latest = times[newest];
             bool found = false;
+            double best = 0;
             for (int end = 0; end < count; end++)
             {
                 int e = (newest - end + times.Length) % times.Length;
                 if (latest - times[e] > window) break;
-                if (!TryFit(end, span, out double vx, out double vy, out double vz, out float middle)) continue;
-                float speed = (float)Math.Sqrt(vx * vx + vy * vy + vz * vz);
-                if (found && speed <= peak) continue;
-                peak = speed;
+                if (!TryFit(end, span, out double fx, out double fy, out double fz, out float middle)) continue;
+                double speed = fx * fx + fy * fy + fz * fz;
+                if (found && speed <= best) continue;
+                best = speed;
+                vx = (float)fx; vy = (float)fy; vz = (float)fz;
                 secondsBefore = latest - middle;
                 found = true;
             }

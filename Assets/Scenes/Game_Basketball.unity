@@ -1747,9 +1747,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e84eb29b3b9e34f8ce9f62a50b35e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.ControllerThrow
-  velocityScale: 1.25
+  source: 0
+  velocityScale: 1.3
+  peakWindow: 0.1
   window: 0.06
   maxSpeed: 15
+  backspin: 2.5
 --- !u!114 &352222331
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3901,9 +3904,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e84eb29b3b9e34f8ce9f62a50b35e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.ControllerThrow
-  velocityScale: 1.25
+  source: 0
+  velocityScale: 1.3
+  peakWindow: 0.1
   window: 0.06
   maxSpeed: 15
+  backspin: 2.5
 --- !u!114 &745613540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4333,9 +4339,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e84eb29b3b9e34f8ce9f62a50b35e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.ControllerThrow
-  velocityScale: 1.25
+  source: 0
+  velocityScale: 1.3
+  peakWindow: 0.1
   window: 0.06
   maxSpeed: 15
+  backspin: 2.5
 --- !u!114 &759101357
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6341,6 +6350,7 @@ GameObject:
   - component: {fileID: 1433841196}
   - component: {fileID: 1433841195}
   - component: {fileID: 1433841197}
+  - component: {fileID: 1433841198}
   m_Layer: 0
   m_Name: Basketball Game
   m_TagString: Untagged
@@ -6398,6 +6408,7 @@ MonoBehaviour:
   basketClip: {fileID: 8300000, guid: a3f6745bfe3f48f428e5d58ca273092e, type: 3}
   popup: {fileID: 324113786}
   recorder: {fileID: 1433841197}
+  assist: {fileID: 1433841198}
 --- !u!4 &1433841196
 Transform:
   m_ObjectHideFlags: 0
@@ -6441,6 +6452,23 @@ MonoBehaviour:
   target: {fileID: 505673389}
   plane: 0
   capacity: 512
+--- !u!114 &1433841198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1433841194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a5550928a045b41b784964282d0a2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Games.Basketball.HoopAssist
+  aim: {fileID: 505673389}
+  strength: 0.75
+  maxYawError: 15
+  minSpeedRatio: 0.6
+  maxSpeedRatio: 1.6
 --- !u!1 &1434503603
 GameObject:
   m_ObjectHideFlags: 0
@@ -7964,9 +7992,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00e84eb29b3b9e34f8ce9f62a50b35e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.ControllerThrow
-  velocityScale: 1.25
+  source: 0
+  velocityScale: 1.3
+  peakWindow: 0.1
   window: 0.06
   maxSpeed: 15
+  backspin: 2.5
 --- !u!114 &1801573640
 MonoBehaviour:
   m_ObjectHideFlags: 0

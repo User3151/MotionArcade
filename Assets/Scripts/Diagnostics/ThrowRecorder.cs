@@ -138,7 +138,7 @@ namespace MotionArcade.Diagnostics
         private void Measure(ref ThrowRecord r)
         {
             Vector3 p = r.Release.Position;
-            Vector3 v = r.Release.Applied;
+            Vector3 v = r.Release.Thrown;   // הזריקה של השחקן, לפני עזרת הכיוון: המדידה היא עליו
             Vector3 g = Physics.gravity;
 
             r.Apex = v.y > 0f ? p.y + v.y * v.y / (2f * -g.y) : p.y;

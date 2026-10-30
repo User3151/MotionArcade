@@ -37,12 +37,16 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void Board_AtRegulationHeightAndDistance_FacingThePlayer()
+        public void Board_AtRegulationHeight_CloserAndBigger_FacingThePlayer()
         {
             var board = (DartBoard)so.FindProperty("board").objectReferenceValue;
             Assert.That(board, Is.Not.Null);
             Assert.That(board.transform.position.y, Is.EqualTo(1.73f).Within(0.005f), "bull height");
-            Assert.That(board.transform.position.z, Is.EqualTo(2.37f).Within(0.005f), "throwing distance from the stand spot");
+            // גיא, אחרי מדידה: הלוח התקני (2.37 מ', רדיוס 17 ס"מ) רחוק וקטן מדי לזריקה בלי משקל ביד
+            Assert.That(board.transform.position.z, Is.EqualTo(2.0f).Within(0.005f), "throwing distance from the stand spot");
+            Assert.That(board.Size, Is.EqualTo(1.3f).Within(1e-4f), "30% bigger than regulation");
+            Assert.That(board.transform.Find("Face").localScale.x, Is.EqualTo(0.451f * board.Size).Within(0.002f), "the drawn board matches the scoring size");
+            Assert.That(board.ScoreAt(board.transform.TransformPoint(0f, 0.15f, 0f)).Number, Is.EqualTo(20), "15 cm up is still inside the 20 (17 cm x 1.3)");
             Assert.That(Vector3.Angle(board.transform.forward, Vector3.forward), Is.LessThan(1f), "face toward -Z, the player");
             Assert.That(board.StickSurface, Is.Not.Null);
             Assert.That(board.StickSurface.isTrigger, Is.False, "a glancing dart must bounce off it");
@@ -68,11 +72,17 @@ namespace MotionArcade.Tests
                 Assert.That(grab.throwOnDetach, Is.False, dart.name + ": ControllerThrow throws, not XRI");
                 Assert.That(dart.GetComponent<MotionArcade.Interaction.ControllerThrow>(), Is.Not.Null, dart.name);
                 Assert.That(dart.GetComponent<MotionArcade.Interaction.NearOnlyGrab>(), Is.Not.Null, dart.name);
-                // תמיד באמצע הגוף, החוד קדימה: ה-Grip על ציר החץ ובלי סיבוב
+                // תמיד באותה אחיזה: מרכז הקנה 1.5 ס"מ מעל נקודת האחיזה (בין האגודל לאצבע), והחוד 22° מתחת
+                // לקרן של הבקר. מהמדידה: הבקר הצביע 49° למעלה בזמן שהזריקות יצאו ב-26°.
                 Assert.That(grab.useDynamicAttach, Is.False, dart.name);
-                Assert.That(grab.attachTransform.localPosition.x, Is.EqualTo(0f).Within(1e-4f));
-                Assert.That(grab.attachTransform.localPosition.y, Is.EqualTo(0f).Within(1e-4f));
-                Assert.That(Quaternion.Angle(grab.attachTransform.localRotation, Quaternion.identity), Is.LessThan(0.1f), dart.name + ": tip forward");
+                Quaternion r = grab.attachTransform.localRotation;
+                Vector3 barrelInHand = Quaternion.Inverse(r) * (new Vector3(0f, 0f, 0.025f) - grab.attachTransform.localPosition);
+                Assert.That(Vector3.Distance(barrelInHand, new Vector3(0f, 0.015f, 0f)), Is.LessThan(1e-3f), dart.name + " barrel in the fingers");
+                Vector3 tipInHand = Quaternion.Inverse(r) * Vector3.forward;
+                Assert.That(Vector3.Angle(tipInHand, Quaternion.Euler(22f, 0f, 0f) * Vector3.forward), Is.LessThan(0.5f), dart.name + ": tip 22° below the ray");
+                var thrower = new SerializedObject(dart.GetComponent<MotionArcade.Interaction.ControllerThrow>());
+                Assert.That(thrower.FindProperty("source").enumValueIndex, Is.EqualTo(0), "speed from the hand's peak");
+                Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1f).Within(1e-4f));
                 var slot = (Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue;
                 Assert.That(holder.Contains(slot.position), Is.True, $"slot {i} outside the holder bounds");
                 Assert.That(Vector3.Angle(slot.forward, Vector3.forward), Is.LessThan(1f), "darts lie pointing at the board");
@@ -101,7 +111,8 @@ namespace MotionArcade.Tests
             // הלוח המרכזי לא מסתיר את מרכז לוח החצים מעין בגובה 1.6 מ'
             var rt = (RectTransform)dock.transform;
             float topEdge = idle.position.y + rt.rect.height * rt.lossyScale.y * 0.5f;
-            float sightAtPanel = 1.6f + (1.73f - 1.6f) * idle.position.z / 2.37f;
+            var board = (DartBoard)so.FindProperty("board").objectReferenceValue;
+            float sightAtPanel = 1.6f + (1.73f - 1.6f) * idle.position.z / board.transform.position.z;
             Assert.That(topEdge, Is.LessThan(sightAtPanel));
         }
 

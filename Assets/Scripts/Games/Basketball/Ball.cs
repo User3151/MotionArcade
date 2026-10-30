@@ -6,7 +6,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace MotionArcade.Games.Basketball
 {
-    // כדור כדורסל. הזריקה עצמה היא של XRI (throwOnDetach); כאן רק:
+    // כדור כדורסל. הזריקה עצמה ב-ControllerThrow; כאן רק:
     // - זוכרים מי זרק אותו אחרון, כדי לרטוט ביד הנכונה כשהוא נכנס לסל,
     // - מחזירים אותו למגש אם הוא יצא מהמכונה או נתקע (על הלוח, על הטבעת), כי השחקן לא יכול ללכת להביא אותו.
     [RequireComponent(typeof(Rigidbody), typeof(XRGrabInteractable))]

@@ -37,6 +37,28 @@ namespace MotionArcade.Tests
         private SerializedObject Game => new SerializedObject(game);
 
         [Test]
+        public void AimAssist_AimsAtTheRimCentre()
+        {
+            var assist = (HoopAssist)Game.FindProperty("assist").objectReferenceValue;
+            Assert.That(assist, Is.Not.Null, "the game hands the assist to every ball");
+            var aim = (Transform)new SerializedObject(assist).FindProperty("aim").objectReferenceValue;
+            Assert.That(aim, Is.Not.Null);
+            Assert.That(aim.name, Is.EqualTo("Hoop"));
+            Assert.That(assist.Strength, Is.InRange(0.5f, 0.9f));
+        }
+
+        [Test]
+        public void ReboundsAreSofter()
+        {
+            // הכדור חזר מהלוח ומהקיר "מהר מאוד, לא כמו כדור עם משקל": ממוצע עם הכדור, לוח 0.5 וטבעת 0.45
+            float Bounce(string name) => AssetDatabase.LoadAssetAtPath<PhysicsMaterial>("Assets/Physics/" + name + ".physicMaterial").bounciness;
+            float ball = Bounce("Ball");
+            Assert.That((ball + Bounce("Backboard")) * 0.5f, Is.LessThanOrEqualTo(0.55f));
+            Assert.That((ball + Bounce("Rim")) * 0.5f, Is.LessThanOrEqualTo(0.5f));
+            Assert.That(ball * 0.5f, Is.LessThanOrEqualTo(0.35f), "walls and floor without a material");
+        }
+
+        [Test]
         public void EveryBallHasASlot_AndIsFastPhysics()
         {
             var balls = Game.FindProperty("balls");
@@ -59,6 +81,11 @@ namespace MotionArcade.Tests
                 Assert.That(grab.useDynamicAttach, Is.False, ball.name);
                 Assert.That(grab.attachTransform, Is.Not.Null.And.Not.SameAs(ball.transform), ball.name);
                 Assert.That(ball.GetComponent<SphereCollider>().sharedMaterial, Is.Not.Null, ball.name + " has no physic material");
+                // מהמדידה: מהירות מהבקר (לא מהכדור, שהצלפת היד הוסיפה לו 33%), כפול 1.3, וסיבוב לאחור
+                var thrower = new SerializedObject(ball.GetComponent<MotionArcade.Interaction.ControllerThrow>());
+                Assert.That(thrower.FindProperty("source").enumValueIndex, Is.EqualTo(0), ball.name);
+                Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1.3f).Within(1e-4f), ball.name);
+                Assert.That(thrower.FindProperty("backspin").floatValue, Is.GreaterThan(0f), ball.name);
             }
         }
 

@@ -21,7 +21,7 @@ namespace MotionArcade.Diagnostics
         public Vector2 Cross;          // איפה
         public Vector2 Aim;            // לאן היה צריך (מרכז הטבעת, המקטע הנוכחי בלוח)
         public int AimNumber;          // בחצים: המטרה של Around the Clock. 0 = אין
-        public float NeedSpeed;        // המהירות שהייתה מביאה לנקודת הכיוון, באותה זווית יציאה. NaN = הזווית נמוכה מדי
+        public float NeedSpeed;        // המהירות שהייתה מביאה לנקודת הכיוון, באותה זווית יציאה (של הזריקה המקורית). NaN = נמוכה מדי
         public float AimYawError;      // כמה מעלות ימינה (+) או שמאלה (‎-) מהכיוון לנקודת הכיוון
         public float Apex;             // הגובה הכי גבוה של המסלול
 
@@ -35,9 +35,9 @@ namespace MotionArcade.Diagnostics
     {
         public const string Header =
             "game,n,phase,time_s,hand,rel_x,rel_y,rel_z," +
-            "applied_speed,applied_pitch,applied_yaw,obj_speed," +
+            "applied_speed,applied_pitch,applied_yaw,thrown_speed,thrown_pitch,thrown_yaw,obj_speed," +
             "hand_speed,hand_pitch,hand_yaw,dev_speed,dev_pitch,dev_yaw," +
-            "peak_hand_speed,peak_before_ms,select_drop_ms,axis_vs_flight_deg,hand_fwd_pitch," +
+            "peak_hand_speed,peak_before_ms,select_drop_ms,axis_vs_flight_deg,hand_fwd_pitch,flight_in_hand_pitch,flight_in_hand_yaw," +
             "need_speed,speed_ratio,aim_yaw_err,crossed,cross_x_cm,cross_y_cm,aim_x_cm,aim_y_cm,err_x_cm,err_y_cm,apex_y," +
             "target,result,result_x_cm,result_y_cm";
 
@@ -51,6 +51,8 @@ namespace MotionArcade.Diagnostics
             Num(sb, t.Position.x); Num(sb, t.Position.y); Num(sb, t.Position.z);
 
             Num(sb, v.magnitude); Num(sb, ThrowMath.PitchOf(v), "0.0"); Num(sb, ThrowMath.YawOf(v), "0.0");
+            Vector3 thrown = t.Thrown;
+            Num(sb, thrown.magnitude); Num(sb, ThrowMath.PitchOf(thrown), "0.0"); Num(sb, ThrowMath.YawOf(thrown), "0.0");
             Num(sb, t.ObjectVelocity.magnitude);
             Direction(sb, t.HandVelocity);
             Direction(sb, t.DeviceVelocity);
@@ -60,9 +62,13 @@ namespace MotionArcade.Diagnostics
             Num(sb, t.SelectDropSeconds * 1000f, "0");
             Num(sb, v.sqrMagnitude > 1e-6f ? Vector3.Angle(t.Forward, v) : float.NaN, "0.0");
             Num(sb, t.HandForward.sqrMagnitude > 1e-6f ? ThrowMath.PitchOf(t.HandForward) : float.NaN, "0.0");
+            // כיוון הזריקה ביחס לנקודת האחיזה ביד: באיזו זווית החץ צריך לשבת ביד כדי להצביע לאן שזורקים
+            Vector3 local = t.HandLocalFlight;
+            Num(sb, float.IsNaN(local.x) ? float.NaN : ThrowMath.PitchOf(local), "0.0");
+            Num(sb, float.IsNaN(local.x) ? float.NaN : ThrowMath.YawOf(local), "0.0");
 
             Num(sb, r.NeedSpeed);
-            Num(sb, r.NeedSpeed > 0f ? v.magnitude / r.NeedSpeed : float.NaN);
+            Num(sb, r.NeedSpeed > 0f ? thrown.magnitude / r.NeedSpeed : float.NaN);   // הזריקה של השחקן, לפני עזרה
             Num(sb, r.AimYawError, "0.0");
             sb.Append(r.Crossed ? "1," : "0,");
             if (r.Crossed)

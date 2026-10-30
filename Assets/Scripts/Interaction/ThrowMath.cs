@@ -59,6 +59,34 @@ namespace MotionArcade.Interaction
             return false;
         }
 
+        // עזרת כיוון: מקרבת זריקה למסלול שעובר ב-aim, בחלק strength (0 עד 1) מהשגיאה, בפנייה ובמהירות.
+        // זווית היציאה (גובה הקשת) נשארת של השחקן; המהירות מתקרבת למה שהיה צריך בזווית הזו.
+        // זריקה רחוקה מדי מהנכון (פנייה מעל maxYawError, או מהירות מחוץ ל-minRatio..maxRatio) לא מתוקנת:
+        // זריקה גרועה עדיין מחטיאה. applied = האם תוקן.
+        public static Vector3 Assist(Vector3 position, Vector3 velocity, Vector3 aim, float gravity, float strength,
+                                     float maxYawError, float minRatio, float maxRatio, out bool applied)
+        {
+            applied = false;
+            float speed = velocity.magnitude;
+            Vector3 to = aim - position;
+            float distance = new Vector2(to.x, to.z).magnitude;
+            if (speed < 0.5f || distance < 0.3f || strength <= 0f) return velocity;
+
+            float pitch = PitchOf(velocity) * Mathf.Deg2Rad;
+            float need = SpeedToHit(distance, to.y, pitch, gravity);
+            if (float.IsNaN(need)) return velocity;   // קשת נמוכה מדי: אין מהירות שמגיעה
+            float ratio = speed / need;
+            float yawError = Mathf.DeltaAngle(YawOf(to), YawOf(velocity));
+            if (ratio < minRatio || ratio > maxRatio || Mathf.Abs(yawError) > maxYawError) return velocity;
+
+            strength = Mathf.Clamp01(strength);
+            float yaw = (YawOf(velocity) - strength * yawError) * Mathf.Deg2Rad;
+            float newSpeed = speed + strength * (need - speed);
+            float horizontal = Mathf.Cos(pitch) * newSpeed;
+            applied = true;
+            return new Vector3(Mathf.Sin(yaw) * horizontal, Mathf.Sin(pitch) * newSpeed, Mathf.Cos(yaw) * horizontal);
+        }
+
         // זווית מעל האופק ופנייה (ימינה = חיובי, 0 = ‎+Z), במעלות
         public static float PitchOf(Vector3 v)
         {

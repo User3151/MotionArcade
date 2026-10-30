@@ -90,6 +90,62 @@ namespace MotionArcade.Tests
         }
 
         [Test]
+        public void PeakVelocity_TakesTheDirectionOfTheFastestMoment()
+        {
+            // יד שעולה ומאיצה קדימה, ובסוף מאטה ויורדת (כמו אחרי שחרור מאוחר). הכיוון בשיא: למעלה-קדימה.
+            var r = new ReleaseVelocity(64);
+            float t = 0f, z = 0f, y = 0f, vz = 0f;
+            for (; t < 0.2f; t += Dt) { r.Add(t, 0f, y, z); vz += 25f * Dt; z += vz * Dt; y += 1.5f * Dt; }
+            for (float s = 0f; s < 0.05f; s += Dt, t += Dt) { r.Add(t, 0f, y, z); vz -= 40f * Dt; z += vz * Dt; y -= 1.5f * Dt; }
+            r.Add(t, 0f, y, z);
+            Assert.That(r.TryPeakVelocity(0.1f, out float px, out float py, out float pz, out _), Is.True);
+            Assert.That(pz, Is.EqualTo(5f).Within(0.5f));   // קו על 30 ms: קצת מתחת לשיא הרגעי
+            Assert.That(py, Is.GreaterThan(0.5f), "still rising at the peak");
+            r.TryEstimate(0.06f, out _, out float ly, out float lz);
+            Assert.That(lz, Is.LessThan(pz - 0.3f), "the last 60 ms caught the slow-down");
+            Assert.That(ly, Is.LessThan(py));
+        }
+
+        [Test]
+        public void Assist_FixesMostOfANearMiss()
+        {
+            var p = new Vector3(0.2f, 2.0f, 0.4f);
+            var aim = new Vector3(0f, 2.45f, 3.25f);
+            Vector3 to = aim - p;
+            float pitch = 50f * Mathf.Deg2Rad;
+            float need = ThrowMath.SpeedToHit(new Vector2(to.x, to.z).magnitude, to.y, pitch, 9.81f);
+            float yaw = ThrowMath.YawOf(to) + 6f;   // 6° ימינה, 15% חזק מדי
+            Vector3 v = Throw(need * 1.15f, 50f, yaw);
+            Vector3 fixedV = ThrowMath.Assist(p, v, aim, 9.81f, 0.75f, 15f, 0.6f, 1.6f, out bool applied);
+            Assert.That(applied, Is.True);
+            Assert.That(fixedV.magnitude / need, Is.EqualTo(1f + 0.15f * 0.25f).Within(0.005f));
+            Assert.That(Mathf.DeltaAngle(ThrowMath.YawOf(to), ThrowMath.YawOf(fixedV)), Is.EqualTo(1.5f).Within(0.05f));
+            Assert.That(ThrowMath.PitchOf(fixedV), Is.EqualTo(50f).Within(0.05f), "the arc stays the player's");
+        }
+
+        [Test]
+        public void Assist_LeavesWildThrowsAlone()
+        {
+            var p = new Vector3(0f, 2.0f, 0.4f);
+            var aim = new Vector3(0f, 2.45f, 3.25f);
+            Vector3 sideways = Throw(6f, 50f, 30f);
+            Assert.That(ThrowMath.Assist(p, sideways, aim, 9.81f, 0.75f, 15f, 0.6f, 1.6f, out bool a1), Is.EqualTo(sideways));
+            Assert.That(a1, Is.False);
+            Vector3 lob = Throw(2f, 50f, 0f);   // הרבה מתחת למה שצריך
+            Assert.That(ThrowMath.Assist(p, lob, aim, 9.81f, 0.75f, 15f, 0.6f, 1.6f, out bool a2), Is.EqualTo(lob));
+            Assert.That(a2, Is.False);
+            Vector3 flat = Throw(8f, 5f, 0f);   // קשת שלא מגיעה לגובה הטבעת בכלל
+            Assert.That(ThrowMath.Assist(p, flat, aim, 9.81f, 0.75f, 15f, 0.6f, 1.6f, out bool a3), Is.EqualTo(flat));
+            Assert.That(a3, Is.False);
+        }
+
+        private static Vector3 Throw(float speed, float pitchDeg, float yawDeg)
+        {
+            float pitch = pitchDeg * Mathf.Deg2Rad, yaw = yawDeg * Mathf.Deg2Rad;
+            return new Vector3(Mathf.Sin(yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(yaw) * Mathf.Cos(pitch)) * speed;
+        }
+
+        [Test]
         public void SpeedToHit_MatchesTheTextbook()
         {
             // 45°, אותו גובה: v² = g·d

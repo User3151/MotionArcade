@@ -7,8 +7,9 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 namespace MotionArcade.Games.Darts
 {
-    // חץ. הזריקה עצמה היא של XRI (throwOnDetach); כאן:
-    // - בזמן טיסה החוד תמיד קדימה: מסובבים את החץ לכיוון המהירות בכל צעד פיזיקה,
+    // חץ. הזריקה עצמה ב-ControllerThrow; כאן:
+    // - בזמן טיסה החוד פונה לכיוון התעופה: כמו הנוצות של חץ אמיתי, החץ מסתובב אליו בהדרגה (alignSpeed)
+    //   ולא בבת אחת. ברגע השחרור הוא עוד בזווית של היד, וקפיצה לכיוון התעופה נראתה לא טבעית.
     // - לפני כל צעד שולחים קרן מהחוד קדימה. אם היא פוגעת בלוח בצעד הזה, החץ ננעץ בנקודת הפגיעה
     //   לפני שהפיזיקה מספיקה להקפיץ אותו. חץ דק ומהיר עלול לעבור דרך משטח או לנתר ממנו בלי זה.
     // - זווית רדודה מדי (מעל 65° מהניצב) לא ננעצת: הפיזיקה מקפיצה את החץ, והוא נופל.
@@ -21,6 +22,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private float embedDepth = 0.012f;     // כמה החוד שוקע בלוח
         [SerializeField] private float maxStickAngle = 65f;
         [SerializeField] private float minStickSpeed = 1.5f;
+        [SerializeField] private float alignSpeed = 400f;       // מעלות לשנייה: 40° של היד מתיישרים ב-0.1 ש', הרבה לפני הלוח
 
         private Rigidbody body;
         private XRGrabInteractable grab;
@@ -88,7 +90,7 @@ namespace MotionArcade.Games.Darts
             }
 
             Vector3 direction = velocity / speed;
-            Quaternion facing = Quaternion.LookRotation(direction);
+            Quaternion facing = Quaternion.RotateTowards(body.rotation, Quaternion.LookRotation(direction), alignSpeed * Time.fixedDeltaTime);
             body.MoveRotation(facing);
             body.angularVelocity = Vector3.zero;
 

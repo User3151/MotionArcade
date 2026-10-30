@@ -1,6 +1,7 @@
 using MotionArcade.Core;
 using MotionArcade.Diagnostics;
 using MotionArcade.Feedback;
+using MotionArcade.Interaction;
 using UnityEngine;
 
 namespace MotionArcade.Games.Basketball
@@ -26,6 +27,7 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private AudioClip basketClip;
         [SerializeField] private ScorePopup popup;
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
+        [SerializeField] private HoopAssist assist;        // עזרת כיוון לכל הכדורים
 
         private readonly BasketDetector detector = new BasketDetector(1f);
         private readonly Collider[] overlap = new Collider[8];   // מוקצה פעם אחת: בדיקת מקום פנוי במגש בלי GC
@@ -37,6 +39,10 @@ namespace MotionArcade.Games.Basketball
         {
             base.Awake();
             foreach (Ball ball in balls) ball.Init(this);
+            // Unity null (שדה ריק) הוא לא null אמיתי לממשק: מעבירים null מפורש
+            IThrowAssist hoop = assist != null ? assist : null;
+            foreach (Ball ball in balls)
+                if (ball.TryGetComponent(out ControllerThrow thrower)) thrower.Assist = hoop;
         }
 
         // ב-Start ולא ב-Awake: כל כדור מוצא את ה-XRGrabInteractable שלו ב-Awake שלו, שאולי עוד לא רץ
