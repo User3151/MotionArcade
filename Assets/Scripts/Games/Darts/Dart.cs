@@ -8,6 +8,9 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 namespace MotionArcade.Games.Darts
 {
     // חץ. הזריקה עצמה ב-ControllerThrow; כאן:
+    // - ביד, החץ הולך עם מיקום היד אבל לא עם הסיבוב שלה (XRGrabInteractable.trackRotation כבוי): הוא תמיד מאוזן
+    //   ומצביע על המטרה הנוכחית. שלושה ניסיונות לכוון זווית אחיזה קבועה (22°, 45°, ואחיזה שלומדת מעצירת הכיוון)
+    //   לא נתנו לגיא חץ מאוזן מול הלוח: הזווית שבה כל אחד מחזיק את הבקר כשהוא מכוון שונה, ועוברת 65°-72°.
     // - בזמן טיסה החוד פונה לכיוון התעופה: כמו הנוצות של חץ אמיתי, החץ מסתובב אליו בהדרגה (alignSpeed)
     //   ולא בבת אחת. ברגע השחרור הוא עוד בזווית של היד, וקפיצה לכיוון התעופה נראתה לא טבעית.
     // - לפני כל צעד שולחים קרן מהחוד קדימה. אם היא פוגעת בלוח בצעד הזה, החץ ננעץ בנקודת הפגיעה
@@ -22,8 +25,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private float embedDepth = 0.012f;     // כמה החוד שוקע בלוח
         [SerializeField] private float maxStickAngle = 65f;
         [SerializeField] private float minStickSpeed = 1.5f;
-        // מעלות לשנייה. החץ מוחזק מאוזן בזמן הכיוון, וביד שהוטתה קדימה בזריקה הוא יוצא עד 60° מכיוון התעופה:
-        // ב-720°/ש' זה מתיישר תוך 0.08 ש', ברבע הראשון של הדרך ללוח
+        // מעלות לשנייה. החץ יוצא מהיד מצביע על המטרה, והתעופה עולה ממנה בכ-20°: מתיישר תוך 0.03 ש'
         [SerializeField] private float alignSpeed = 720f;
 
         private Rigidbody body;
@@ -69,6 +71,13 @@ namespace MotionArcade.Games.Darts
         {
             LastHolder = args.interactorObject;
             Current = State.Held;
+            if (game != null && game.Board != null)
+            {
+                // מיד, ולא רק בצעד הפיזיקה הבא: אחרת ברגע התפיסה רואים אותו לפריים בזווית שבה שכב במחזיק
+                Quaternion aiming = Aiming(body.position, game.AimPoint);
+                body.rotation = aiming;
+                transform.rotation = aiming;
+            }
             Haptics.Pulse(args.interactorObject, Haptics.Light, 0.03f);
         }
 
@@ -80,6 +89,11 @@ namespace MotionArcade.Games.Darts
 
         private void FixedUpdate()
         {
+            if (Current == State.Held)
+            {
+                if (game != null && game.Board != null) body.MoveRotation(Aiming(body.position, game.AimPoint));
+                return;
+            }
             if (Current != State.Flying) return;
 
             Vector3 velocity = body.linearVelocity;
@@ -105,6 +119,9 @@ namespace MotionArcade.Games.Darts
                 if (angle <= maxStickAngle && speed >= minStickSpeed) Stick(hit.point, direction);
             }
         }
+
+        // ביד: החוד אל המטרה, והחץ לא מוטה לצד
+        public static Quaternion Aiming(Vector3 position, Vector3 target) => Quaternion.LookRotation(target - position, Vector3.up);
 
         // פגע במשהו אחר (קיר, רצפה, קצה הלוח בזווית רדודה): מפסיקים לכוון אותו, והוא נופל כמו שהוא
         private void OnCollisionEnter(Collision collision)

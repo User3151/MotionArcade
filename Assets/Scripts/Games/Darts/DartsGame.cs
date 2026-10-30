@@ -1,6 +1,7 @@
 using MotionArcade.Core;
 using MotionArcade.Diagnostics;
 using MotionArcade.Feedback;
+using MotionArcade.Interaction;
 using TMPro;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private AudioClip targetClip;
         [SerializeField] private ScorePopup popup;
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
+        [SerializeField] private DartAssist assist;        // עזרת כיוון עדינה לכל החצים
 
         private static readonly Color HitColor = Color.white;
         private static readonly Color AdvanceColor = new Color(0.3f, 1f, 0.4f);
@@ -66,6 +68,10 @@ namespace MotionArcade.Games.Darts
             hints[AroundTheClock.Bull] = "Hit the BULL";
             lostTimers = new float[darts.Length];
             foreach (Dart dart in darts) dart.Init(this);
+            // Unity null (שדה ריק) הוא לא null אמיתי לממשק: מעבירים null מפורש
+            IThrowAssist aim = assist != null ? assist : null;
+            foreach (Dart dart in darts)
+                if (dart.TryGetComponent(out ControllerThrow thrower)) thrower.Assist = aim;
         }
 
         // ב-Start: כל חץ מוצא את ה-XRGrabInteractable שלו ב-Awake שלו, שאולי עוד לא רץ

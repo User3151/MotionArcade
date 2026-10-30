@@ -1,11 +1,10 @@
-using MotionArcade.Games.Darts;
 using MotionArcade.Interaction;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace MotionArcade.Tests
 {
-    // רגע הכיוון (העצירה שלפני הזריקה) ואחיזת החץ שנלמדת ממנו
+    // רגע הכיוון: העצירה שלפני הזריקה (נמדד ונרשם עם כל זריקה)
     public class HandPoseHistoryTests
     {
         private const float Dt = 1f / 90f;
@@ -87,38 +86,6 @@ namespace MotionArcade.Tests
             Assert.That(h.Count, Is.EqualTo(64));
             Assert.That(h.TryFindPause(release, 1.5f, 0.15f, 0.25f, out _, out Quaternion r, out _), Is.True);
             Assert.That(Quaternion.Angle(r, Aim), Is.LessThan(0.5f));
-        }
-    }
-
-    public class DartGripMathTests
-    {
-        [Test]
-        public void PointingAt_MakesTheDartLevel_InTheAimPose()
-        {
-            // גיא: כשהוא מכוון, הבקר מוטה למעלה, והחץ צריך להיות מאוזן ולהצביע ישר על הלוח
-            Quaternion hand = Quaternion.Euler(-55f, 8f, 10f);
-            var handPos = new Vector3(0.2f, 1.73f, 0f);
-            var target = new Vector3(0.2f, 1.73f, 2f);
-            Quaternion inHand = DartGrip.PointingAt(hand, handPos, target);
-            Quaternion dart = hand * inHand;
-            Assert.That(Vector3.Angle(dart * Vector3.forward, Vector3.forward), Is.LessThan(0.1f), "points at the board");
-            Assert.That(Vector3.Angle(dart * Vector3.up, Vector3.up), Is.LessThan(0.1f), "not rolled");
-        }
-
-        [Test]
-        public void AttachPose_PutsTheDartInTheFingers()
-        {
-            // XRI: סיבוב החץ = יד × attach⁻¹, ונקודת ה-attach של החץ יושבת על נקודת האחיזה ביד
-            Quaternion inHand = Quaternion.Euler(45f, -8f, 0f);
-            DartGrip.AttachPose(inHand, out Vector3 localPosition, out Quaternion localRotation);
-            Quaternion hand = Quaternion.Euler(-45f, 20f, 0f);
-            var handPos = new Vector3(0.1f, 1.5f, 0.3f);
-            Quaternion dart = hand * Quaternion.Inverse(localRotation);
-            Vector3 dartCentre = handPos - dart * localPosition;
-            Assert.That(Quaternion.Angle(dart, hand * inHand), Is.LessThan(0.1f));
-            // מרכז הקנה (2.5 ס"מ לפני מרכז החץ) 1.5 ס"מ מעל נקודת האחיזה, בכיוון של היד
-            Vector3 barrel = dartCentre + dart * new Vector3(0f, 0f, 0.025f);
-            Assert.That(Vector3.Distance(barrel, handPos + hand * new Vector3(0f, 0.015f, 0f)), Is.LessThan(1e-4f));
         }
     }
 }
