@@ -22,13 +22,23 @@ namespace MotionArcade.Feedback
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (clip == null) return;
             float speed = collision.relativeVelocity.magnitude;
             if (speed < minSpeed || Time.time < nextAllowedTime) return;
 
+            // משטח עם צליל משלו (טבעת, לוח) משמיע אותו במקום הצליל של החפץ
+            AudioClip play = clip;
+            float scale = 1f;
+            SurfaceSound surface = collision.collider.GetComponentInParent<SurfaceSound>();
+            if (surface != null)
+            {
+                AudioClip own = surface.Pick();
+                if (own != null) { play = own; scale = surface.Volume; }
+            }
+            if (play == null) return;
+
             nextAllowedTime = Time.time + cooldown;
             source.pitch = Random.Range(0.92f, 1.08f);
-            source.PlayOneShot(clip, Mathf.Clamp01(speed / fullSpeed));
+            source.PlayOneShot(play, Mathf.Clamp01(speed / fullSpeed) * scale);
         }
     }
 }

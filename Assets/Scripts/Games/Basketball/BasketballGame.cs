@@ -28,7 +28,9 @@ namespace MotionArcade.Games.Basketball
 
         [Header("Feedback")]
         [SerializeField] private AudioSource hoopAudio;
-        [SerializeField] private AudioClip basketClip;
+        [SerializeField] private AudioClip swishClip;      // הכדור עובר ברשת
+        [SerializeField] private AudioSource crowd;        // הקהל מסביב (בלי מיקום)
+        [SerializeField] private AudioClip[] cheerClips;
         [SerializeField] private ScorePopup popup;
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
         [SerializeField] private HoopAssist assist;        // עזרת כיוון לכל הכדורים
@@ -99,12 +101,18 @@ namespace MotionArcade.Games.Basketball
 
         private void Basket(Ball ball)
         {
-            if (recorder != null) recorder.NoteResult(ball.gameObject, "BASKET");
+            if (recorder != null && ball.TouchedHoop) recorder.NoteResult(ball.gameObject, "BASKET");
 
             int points = BasketballScoring.PointsFor(TimeLeft);
             bool counted = AddScore(points);
 
-            if (hoopAudio != null && basketClip != null) hoopAudio.PlayOneShot(basketClip);
+            // כל סל עובר ברשת. סוויש (בלי לגעת בטבעת או בלוח): הרשת נשמעת חזק יותר והקהל מריע יותר.
+            // אחרי נגיעה הצלצול של הטבעת כבר נשמע (ImpactSound), והרשת חלשה יותר.
+            bool swish = !ball.TouchedHoop;
+            if (hoopAudio != null && swishClip != null) hoopAudio.PlayOneShot(swishClip, swish ? 1f : 0.6f);
+            if (crowd != null && cheerClips != null && cheerClips.Length > 0)
+                crowd.PlayOneShot(cheerClips[Random.Range(0, cheerClips.Length)], swish ? 1f : 0.7f);
+            if (recorder != null && swish) recorder.NoteResult(ball.gameObject, "SWISH");
             Haptics.Pulse(ball.LastHolder, Haptics.Strong, 0.15f);
             if (counted && popup != null) popup.Show(points);
         }

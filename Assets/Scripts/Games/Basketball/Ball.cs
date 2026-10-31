@@ -27,6 +27,9 @@ namespace MotionArcade.Games.Basketball
         private bool hasPrevious;   // false אחרי תפיסה והצבה: אין "צעד קודם" אמיתי להשוות אליו
         private bool ringDone;      // הזריקה הזו כבר נספרה (או עלתה דרך הטבעת מלמטה)
 
+        // מאז שנזרק, נגע בטבעת או בלוח? סל בלי נגיעה = "סוויש", עם צליל ותשואות גדולות יותר
+        public bool TouchedHoop { get; private set; }
+
         public bool IsHeld => grab.isSelected;
         public Vector3 Velocity => body.linearVelocity;
         public IXRInteractor LastHolder { get; private set; }
@@ -58,6 +61,7 @@ namespace MotionArcade.Games.Basketball
             outsideTimer = 0f;
             stillTimer = 0f;
             ringDone = false;   // זריקה חדשה
+            TouchedHoop = false;
             Haptics.Pulse(args.interactorObject, Haptics.Light, 0.04f);
         }
 
@@ -84,6 +88,12 @@ namespace MotionArcade.Games.Basketball
                 game.ReturnBall(this);
         }
 
+        private void OnCollisionEnter(Collision collision)
+        {
+            SurfaceSound surface = collision.collider.GetComponentInParent<SurfaceSound>();
+            if (surface != null && surface.Kind != SurfaceSound.Part.Other) TouchedHoop = true;
+        }
+
         // הצבה ישירה (בלי לעבור דרך העולם). גם transform וגם body, כי עם Interpolate ה-transform לבד נדרס.
         public void Teleport(Vector3 position)
         {
@@ -95,6 +105,7 @@ namespace MotionArcade.Games.Basketball
             outsideTimer = stillTimer = 0f;
             hasPrevious = false;   // בלי זה הקפיצה עצמה (מהלוח למגש) הייתה נבדקת כתנועה
             ringDone = false;
+            TouchedHoop = false;
         }
     }
 }

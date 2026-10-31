@@ -127,6 +127,30 @@ namespace MotionArcade.Tests
         }
 
         [Test]
+        public void SoundsLikeAnArena()
+        {
+            // כמו ב-Just Hoops: צלצול טבעת, חבטה בלוח, רשת, ותשואות קהל על סל
+            var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
+            var rim = ring.Find("Rim").GetComponent<SurfaceSound>();
+            Assert.That(rim, Is.Not.Null);
+            Assert.That(rim.Kind, Is.EqualTo(SurfaceSound.Part.Rim));
+            Assert.That(rim.Pick(), Is.Not.Null);
+            var board = ring.Find("Backboard").GetComponent<SurfaceSound>();
+            Assert.That(board, Is.Not.Null);
+            Assert.That(board.Kind, Is.EqualTo(SurfaceSound.Part.Backboard));
+            Assert.That(board.Pick(), Is.Not.Null);
+            // כל קוליידר של הטבעת מוצא את הצליל שלה (ImpactSound מחפש בהורים)
+            foreach (var c in ring.Find("Rim").GetComponentsInChildren<Collider>())
+                Assert.That(c.GetComponentInParent<SurfaceSound>(), Is.SameAs(rim), c.name);
+
+            Assert.That(Game.FindProperty("swishClip").objectReferenceValue, Is.Not.Null);
+            var crowd = (AudioSource)Game.FindProperty("crowd").objectReferenceValue;
+            Assert.That(crowd, Is.Not.Null);
+            Assert.That(crowd.spatialBlend, Is.EqualTo(0f), "the crowd is all around");
+            Assert.That(Game.FindProperty("cheerClips").arraySize, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
         public void EverySoundGoesThroughTheSfxGroup()
         {
             // אחרת סליידר ה-EFFECTS בהגדרות לא משפיע עליו

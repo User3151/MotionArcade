@@ -884,6 +884,135 @@ Transform:
   m_Children: []
   m_Father: {fileID: 554802727}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &312726270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 312726272}
+  - component: {fileID: 312726271}
+  m_Layer: 0
+  m_Name: Crowd
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!82 &312726271
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312726270}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: -4130317427632360991, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 0.8
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!4 &312726272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312726270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1433841196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &324113785
 GameObject:
   m_ObjectHideFlags: 0
@@ -1249,7 +1378,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9a20878d2660c4489e465986977deb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.ImpactSound
-  clip: {fileID: 8300000, guid: 06891f7e5791fb4449d4641e4173c10c, type: 3}
+  clip: {fileID: 8300000, guid: b0a5e6f3e56cff54eb7279a8c37f77c9, type: 3}
   minSpeed: 0.7
   fullSpeed: 4
   cooldown: 0.12
@@ -2560,6 +2689,7 @@ GameObject:
   - component: {fileID: 518786316}
   - component: {fileID: 518786315}
   - component: {fileID: 518786314}
+  - component: {fileID: 518786317}
   m_Layer: 0
   m_Name: Backboard
   m_TagString: Untagged
@@ -2660,6 +2790,22 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 518786312}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &518786317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518786312}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbf2658d7c77e3d44b915c5fcf9f2a97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.SurfaceSound
+  clips:
+  - {fileID: 8300000, guid: 0f1ecdd02e11b7a45a2b2b421e3866d1, type: 3}
+  part: 2
+  volume: 1
 --- !u!1 &544997119
 GameObject:
   m_ObjectHideFlags: 0
@@ -3422,7 +3568,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9a20878d2660c4489e465986977deb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.ImpactSound
-  clip: {fileID: 8300000, guid: 06891f7e5791fb4449d4641e4173c10c, type: 3}
+  clip: {fileID: 8300000, guid: b0a5e6f3e56cff54eb7279a8c37f77c9, type: 3}
   minSpeed: 0.7
   fullSpeed: 4
   cooldown: 0.12
@@ -3874,7 +4020,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9a20878d2660c4489e465986977deb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.ImpactSound
-  clip: {fileID: 8300000, guid: 06891f7e5791fb4449d4641e4173c10c, type: 3}
+  clip: {fileID: 8300000, guid: b0a5e6f3e56cff54eb7279a8c37f77c9, type: 3}
   minSpeed: 0.7
   fullSpeed: 4
   cooldown: 0.12
@@ -6093,6 +6239,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1420343009}
+  - component: {fileID: 1420343010}
   m_Layer: 0
   m_Name: Rim
   m_TagString: Untagged
@@ -6131,6 +6278,23 @@ Transform:
   - {fileID: 2012562143}
   m_Father: {fileID: 505673389}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1420343010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420343008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbf2658d7c77e3d44b915c5fcf9f2a97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.SurfaceSound
+  clips:
+  - {fileID: 8300000, guid: 344b47c302f75c54ab18e745924cbe11, type: 3}
+  - {fileID: 8300000, guid: f74e9f1ef68606a4f9fe503c676dd00b, type: 3}
+  part: 1
+  volume: 1
 --- !u!1 &1432313257
 GameObject:
   m_ObjectHideFlags: 0
@@ -6320,7 +6484,11 @@ MonoBehaviour:
     m_Center: {x: 0, y: 0.98, z: 0.6}
     m_Extent: {x: 0.8, y: 0.15, z: 0.17}
   hoopAudio: {fileID: 505673390}
-  basketClip: {fileID: 8300000, guid: a3f6745bfe3f48f428e5d58ca273092e, type: 3}
+  swishClip: {fileID: 8300000, guid: 05ceb393d8678864dba279e57992bbf1, type: 3}
+  crowd: {fileID: 312726271}
+  cheerClips:
+  - {fileID: 8300000, guid: 0a6b3d00ef0de3e469a5d056584aec64, type: 3}
+  - {fileID: 8300000, guid: 8fb227fb475c9e24789685457ac1855a, type: 3}
   popup: {fileID: 324113786}
   recorder: {fileID: 1433841197}
   assist: {fileID: 1433841198}
@@ -6346,6 +6514,7 @@ Transform:
   - {fileID: 360130852}
   - {fileID: 1710389243}
   - {fileID: 2005980497}
+  - {fileID: 312726272}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1433841197
@@ -7218,7 +7387,7 @@ GameObject:
   - component: {fileID: 1710389243}
   - component: {fileID: 1710389244}
   m_Layer: 0
-  m_Name: Music
+  m_Name: Crowd Ambience
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7252,11 +7421,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.GameMusic
   clips:
-  - {fileID: 8300000, guid: 3ee5b44ee24407243810d1b890e5a88e, type: 3}
-  - {fileID: 8300000, guid: 41f26f997c12b5a44a4a216d94918672, type: 3}
-  - {fileID: 8300000, guid: e3e75fc0f59d91747b20ae7c1f6f3c9e, type: 3}
+  - {fileID: 8300000, guid: 2718474b4fa5e724cbcade65247c2e65, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
-  volume: 0.5
+  volume: 0.55
   fadeIn: 1.5
   crossfade: 2
 --- !u!1 &1754327272
@@ -7600,7 +7767,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9a20878d2660c4489e465986977deb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.ImpactSound
-  clip: {fileID: 8300000, guid: 06891f7e5791fb4449d4641e4173c10c, type: 3}
+  clip: {fileID: 8300000, guid: b0a5e6f3e56cff54eb7279a8c37f77c9, type: 3}
   minSpeed: 0.7
   fullSpeed: 4
   cooldown: 0.12

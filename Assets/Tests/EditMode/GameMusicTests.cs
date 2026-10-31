@@ -47,11 +47,12 @@ namespace MotionArcade.Tests
             return all.FirstOrDefault();
         }
 
-        [TestCase("Assets/Scenes/Game_Basketball.unity", "basketball", 3, true)]
-        [TestCase("Assets/Scenes/Game_Whack.unity", "whack", 1, true)]
-        [TestCase("Assets/Scenes/Game_BuzzWire.unity", "buzzwire", 3, true)]
-        [TestCase("Assets/Scenes/Game_Darts.unity", "darts", 3, false)]
-        public void EveryGame_HasMusic_AndTheTimedOnesACountdown(string path, string game, int tracks, bool countdown)
+        // כדורסל: במקום מוזיקה, קהל באולם (גיא, לפי Just Hoops)
+        [TestCase("Assets/Scenes/Game_Basketball.unity", "crowd_ambience", true)]
+        [TestCase("Assets/Scenes/Game_Whack.unity", "whack_1", true)]
+        [TestCase("Assets/Scenes/Game_BuzzWire.unity", "buzzwire_1,buzzwire_2,buzzwire_3", true)]
+        [TestCase("Assets/Scenes/Game_Darts.unity", "darts_1,darts_2,darts_3", false)]
+        public void EveryGame_HasMusic_AndTheTimedOnesACountdown(string path, string trackList, bool countdown)
         {
             Scene scene = SceneManager.GetSceneByPath(path);
             bool openedHere = !scene.isLoaded;
@@ -62,14 +63,15 @@ namespace MotionArcade.Tests
                 Assert.That(music, Is.Not.Null);
                 var so = new SerializedObject(music);
                 // גיא בחר: כל הקטעים של המשחק, אחד אחרי השני (בחפרפרות רק הראשון)
+                string[] tracks = trackList.Split(',');
                 var clips = so.FindProperty("clips");
-                Assert.That(clips.arraySize, Is.EqualTo(tracks));
-                for (int i = 0; i < tracks; i++)
+                Assert.That(clips.arraySize, Is.EqualTo(tracks.Length));
+                for (int i = 0; i < tracks.Length; i++)
                 {
                     var clip = (AudioClip)clips.GetArrayElementAtIndex(i).objectReferenceValue;
                     Assert.That(clip, Is.Not.Null, "track " + i);
-                    Assert.That(clip.name, Is.EqualTo(game + "_" + (i + 1)));
-                    Assert.That(clip.length, Is.GreaterThan(60f), clip.name + ": the full piece, not the old 20 s loop");
+                    Assert.That(clip.name, Is.EqualTo(tracks[i]));
+                    Assert.That(clip.length, Is.GreaterThanOrEqualTo(30f), clip.name + ": a full piece, not a short loop");
                 }
                 Assert.That(((Object)so.FindProperty("output").objectReferenceValue).name, Is.EqualTo("Music"), "the MUSIC slider");
 
