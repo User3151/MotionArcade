@@ -186,6 +186,27 @@ namespace MotionArcade.Tests
         }
 
         [Test]
+        public void TheGameIsLouderThanTheCrowd()
+        {
+            // גיא: הקהל רעש מדי ביחס לכדורים, לסל ולטיימר. הטבעת 3.3 מ' מהשחקן: עם minDistance 1 היא נשמעה בשליש עוצמה,
+            // ותשואות ב-2D ב-0.8 הסתירו אותה. עכשיו הכדור והטבעת בעוצמה מלאה מהעמדה, והקהל מאחוריהם
+            var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
+            var hoop = ring.GetComponentInParent<AudioSource>();
+            Assert.That(hoop, Is.Not.Null);
+            Assert.That(hoop.minDistance, Is.GreaterThanOrEqualTo(3.5f), "swish at full volume from the throwing spot");
+            var balls = Game.FindProperty("balls");
+            for (int i = 0; i < balls.arraySize; i++)
+                Assert.That(((Component)balls.GetArrayElementAtIndex(i).objectReferenceValue).GetComponent<AudioSource>().minDistance,
+                    Is.GreaterThanOrEqualTo(3.5f), "rim and backboard hits play on the ball, at the hoop");
+            Assert.That(((AudioSource)Game.FindProperty("crowd").objectReferenceValue).volume, Is.LessThanOrEqualTo(0.5f), "cheers");
+            var roots = scene.GetRootGameObjects();
+            foreach (var ambience in roots.SelectMany(r => r.GetComponentsInChildren<GameMusic>(true)))
+                Assert.That(new SerializedObject(ambience).FindProperty("volume").floatValue, Is.LessThanOrEqualTo(0.35f), "crowd ambience");
+            foreach (var ticks in roots.SelectMany(r => r.GetComponentsInChildren<CountdownTicks>(true)))
+                Assert.That(new SerializedObject(ticks).FindProperty("volume").floatValue, Is.EqualTo(1f), "the timer above the crowd");
+        }
+
+        [Test]
         public void EverySoundGoesThroughTheSfxGroup()
         {
             // אחרת סליידר ה-EFFECTS בהגדרות לא משפיע עליו
