@@ -1,8 +1,8 @@
 # Credits
 
 ## Music
-- Game music loops in `Assets/Audio/Music` (`basketball_*`, `whack_*`, `buzzwire_*`, `darts_*`) were generated with
-  [ElevenLabs](https://elevenlabs.io) (Sound Effects API, free plan: attribution required, non-commercial use).
+- Game music in `Assets/Audio/Music` (`basketball_*`, `whack_*`, `buzzwire_*`, `darts_*`) was generated with
+  [ElevenLabs Music](https://elevenlabs.io/music).
 
 ## Sound effects
 - `Assets/Audio/SFX` and `Assets/Audio/Music/clock_tick.wav` are synthesized from simple waveforms for this

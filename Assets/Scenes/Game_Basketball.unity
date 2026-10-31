@@ -7251,10 +7251,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7266adad20094f34683fb046145a646d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.GameMusic
-  clip: {fileID: 8300000, guid: 3ee5b44ee24407243810d1b890e5a88e, type: 3}
+  clips:
+  - {fileID: 8300000, guid: 3ee5b44ee24407243810d1b890e5a88e, type: 3}
+  - {fileID: 8300000, guid: 41f26f997c12b5a44a4a216d94918672, type: 3}
+  - {fileID: 8300000, guid: e3e75fc0f59d91747b20ae7c1f6f3c9e, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
   volume: 0.5
   fadeIn: 1.5
+  crossfade: 2
 --- !u!1 &1754327272
 GameObject:
   m_ObjectHideFlags: 0

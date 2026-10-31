@@ -32,6 +32,14 @@ namespace MotionArcade.Tests
 
     public class GameMusicSceneTests
     {
+        [Test]
+        public void Playlist_GoesRound()
+        {
+            Assert.That(GameMusic.Next(0, 3), Is.EqualTo(1));
+            Assert.That(GameMusic.Next(2, 3), Is.EqualTo(0));
+            Assert.That(GameMusic.Next(0, 1), Is.EqualTo(0));
+        }
+
         private static T Single<T>(Scene scene) where T : Component
         {
             var all = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<T>(true)).ToArray();
@@ -39,11 +47,11 @@ namespace MotionArcade.Tests
             return all.FirstOrDefault();
         }
 
-        [TestCase("Assets/Scenes/Game_Basketball.unity", true)]
-        [TestCase("Assets/Scenes/Game_Whack.unity", true)]
-        [TestCase("Assets/Scenes/Game_BuzzWire.unity", true)]
-        [TestCase("Assets/Scenes/Game_Darts.unity", false)]
-        public void EveryGame_HasMusic_AndTheTimedOnesACountdown(string path, bool countdown)
+        [TestCase("Assets/Scenes/Game_Basketball.unity", "basketball", 3, true)]
+        [TestCase("Assets/Scenes/Game_Whack.unity", "whack", 1, true)]
+        [TestCase("Assets/Scenes/Game_BuzzWire.unity", "buzzwire", 3, true)]
+        [TestCase("Assets/Scenes/Game_Darts.unity", "darts", 3, false)]
+        public void EveryGame_HasMusic_AndTheTimedOnesACountdown(string path, string game, int tracks, bool countdown)
         {
             Scene scene = SceneManager.GetSceneByPath(path);
             bool openedHere = !scene.isLoaded;
@@ -53,7 +61,16 @@ namespace MotionArcade.Tests
                 var music = Single<GameMusic>(scene);
                 Assert.That(music, Is.Not.Null);
                 var so = new SerializedObject(music);
-                Assert.That(so.FindProperty("clip").objectReferenceValue, Is.Not.Null);
+                // גיא בחר: כל הקטעים של המשחק, אחד אחרי השני (בחפרפרות רק הראשון)
+                var clips = so.FindProperty("clips");
+                Assert.That(clips.arraySize, Is.EqualTo(tracks));
+                for (int i = 0; i < tracks; i++)
+                {
+                    var clip = (AudioClip)clips.GetArrayElementAtIndex(i).objectReferenceValue;
+                    Assert.That(clip, Is.Not.Null, "track " + i);
+                    Assert.That(clip.name, Is.EqualTo(game + "_" + (i + 1)));
+                    Assert.That(clip.length, Is.GreaterThan(60f), clip.name + ": the full piece, not the old 20 s loop");
+                }
                 Assert.That(((Object)so.FindProperty("output").objectReferenceValue).name, Is.EqualTo("Music"), "the MUSIC slider");
 
                 var ticks = Single<CountdownTicks>(scene);
