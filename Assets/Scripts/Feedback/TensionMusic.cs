@@ -4,27 +4,37 @@ using UnityEngine.Audio;
 
 namespace MotionArcade.Feedback
 {
-    // כמה מכל שכבה מתנגן בכל רגע של הסבב, ובאיזו מהירות. בלי Unity מעבר ל-Mathf, לבדיקות.
-    // גיא: "ככל שהטיימר מתקרב לסוף, המוזיקה יותר מותחת ומלחיצה". השכבות נכנסות לפי החלק מהסבב שעבר,
-    // כדי שזה יעבוד גם בסבב של 60 וגם של 120 שניות. השכבה האחרונה והתקתוק לפי שניות: 10 השניות האחרונות.
+    // כמה מכל שלב של המוזיקה מתנגן בכל רגע של הסבב, ובאיזו מהירות. בלי Unity מעבר ל-Mathf, לבדיקות.
+    // גיא: "ככל שהטיימר מתקרב לסוף, המוזיקה יותר מותחת ומלחיצה". שלושה שלבים: התחלה, בנייה, סוף.
+    // הבנייה נכנסת לפי החלק מהסבב שעבר (25%-40%), כדי שזה יעבוד גם בסבב של 60 וגם של 120 שניות;
+    // הסוף לפי שניות: 15 השניות האחרונות. התקתוק בעשר האחרונות.
     public static class TensionCurve
     {
-        public const int Layers = 4;               // בסיס, דחף, כלי קשת, סוף
-        public const float FinalSeconds = 10f;
+        public const int MaxStages = 3;
+        public const float FinalStageSeconds = 15f;
+        public const float TickSeconds = 10f;
         public const float SpeedUpSeconds = 15f;
-        public const float MaxSpeedUp = 0.08f;     // 8% מהר יותר בשנייה האחרונה (וגם חצי טון וקצת גבוה יותר)
+        public const float MaxSpeedUp = 0.06f;     // 6% מהר יותר בשנייה האחרונה
 
-        public static float Layer(int layer, float timeLeft, float roundSeconds)
+        // עוצמה (0-1) של שלב stage מתוך stages. הלופים לא מסונכרנים זה לזה, אז המעבר שומר על אנרגיה (שורש
+        // המשקל): במעבר ליניארי בין שני שירים שונים העוצמה הייתה צונחת באמצע.
+        public static float Stage(int stage, int stages, float timeLeft, float roundSeconds)
         {
+            if (stages <= 1) return stage == 0 ? 1f : 0f;
             float elapsed = roundSeconds > 0f ? Mathf.Clamp01(1f - timeLeft / roundSeconds) : 1f;
-            switch (layer)
+            float build = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.25f, 0.4f, elapsed));
+            float final = stages >= 3
+                ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(FinalStageSeconds + 2f, FinalStageSeconds, timeLeft))
+                : 0f;
+            float weight;
+            switch (stage)
             {
-                case 0: return 1f;
-                case 1: return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.2f, 0.35f, elapsed));
-                case 2: return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.55f, 0.7f, elapsed));
-                case 3: return timeLeft <= FinalSeconds ? 1f : 0f;
-                default: return 0f;
+                case 0: weight = (1f - build) * (1f - final); break;
+                case 1: weight = build * (1f - final); break;
+                case 2: weight = final; break;
+                default: weight = 0f; break;
             }
+            return Mathf.Sqrt(weight);
         }
 
         public static float Pitch(float timeLeft) => 1f + MaxSpeedUp * (1f - Mathf.Clamp01(timeLeft / SpeedUpSeconds));
@@ -33,24 +43,26 @@ namespace MotionArcade.Feedback
         public static int TickSecond(float timeLeft)
         {
             int second = Mathf.CeilToInt(timeLeft);
-            return second >= 1 && second <= FinalSeconds ? second : 0;
+            return second >= 1 && second <= TickSeconds ? second : 0;
         }
     }
 
-    // מוזיקה שמתחילה עם הסבב ונהיית מותחת ככל שהזמן אוזל: ארבע שכבות של אותה לופ, שמתחילות יחד באותו רגע
-    // (PlayScheduled) ולכן נשארות מסונכרנות, וכל אחת עולה לפי TensionCurve. ב-15 השניות האחרונות הכל מואץ,
-    // וב-10 האחרונות יש תקתוק שעון שעולה בגובה ובעוצמה. נעצרת בדעיכה קצרה בסוף הסבב או ב-STOP.
-    // המקורות נוצרים ב-Awake (בטעינת הסצנה), מנותבים לקבוצה Music במיקסר, כך שסליידר המוזיקה שולט בהם.
+    // מוזיקה לסבב. במשחקים עם לחץ זמן (כדורסל, חפרפרות, Buzz Wire): שלושה לופים של ElevenLabs, אחד לכל שלב,
+    // שעוברים מאחד לשני לפי TensionCurve ככל שהזמן אוזל. ב-15 השניות האחרונות הכל גם מואץ קצת, ובעשר האחרונות
+    // יש תקתוק שעון שעולה בגובה ובעוצמה. בחצים: לופ אחד רגוע, בלי תקתוק ובלי האצה.
+    // מתחילה עם הסבב, ונעצרת בדעיכה קצרה בסוף הסבב או ב-STOP. המקורות נוצרים ב-Awake (בטעינת הסצנה), מנותבים
+    // לקבוצה Music במיקסר, כך שסליידר המוזיקה שולט בהם.
     public class TensionMusic : MonoBehaviour
     {
         [SerializeField] private GameStation station;
-        [SerializeField] private AudioClip[] layers = new AudioClip[TensionCurve.Layers];
+        [SerializeField] private AudioClip[] stages = new AudioClip[TensionCurve.MaxStages];
         [SerializeField] private AudioClip tick;
         [SerializeField] private AudioMixerGroup output;
-        [SerializeField, Range(0f, 1f)] private float volume = 0.7f;
+        [SerializeField] private bool clockTicks = true;
+        [SerializeField] private bool speedUp = true;
+        [SerializeField, Range(0f, 1f)] private float volume = 0.6f;
         [SerializeField, Range(0f, 1f)] private float tickVolume = 0.6f;
-        [SerializeField] private float layerFade = 1.5f;    // שניות לשכבה להיכנס במלואה
-        [SerializeField] private float stopFade = 0.5f;
+        [SerializeField] private float stopFade = 0.6f;
 
         private AudioSource[] sources;
         private AudioSource tickSource;
@@ -61,16 +73,17 @@ namespace MotionArcade.Feedback
         private int lastTick;
 
         public bool IsPlaying => playing;
-        public float Level(int layer) => levels[layer];
+        public int StageCount => sources.Length;
+        public float Level(int stage) => levels[stage];
         public float CurrentPitch => sources.Length > 0 ? sources[0].pitch : 1f;
 
         private void Awake()
         {
-            sources = new AudioSource[layers.Length];
-            levels = new float[layers.Length];
-            for (int i = 0; i < layers.Length; i++)
+            sources = new AudioSource[stages.Length];
+            levels = new float[stages.Length];
+            for (int i = 0; i < stages.Length; i++)
             {
-                sources[i] = CreateSource("Music Layer " + (i + 1), layers[i]);
+                sources[i] = CreateSource("Music Stage " + (i + 1), stages[i]);
                 sources[i].loop = true;
             }
             tickSource = CreateSource("Clock Tick", tick);
@@ -105,7 +118,7 @@ namespace MotionArcade.Feedback
 
         private void Begin()
         {
-            // כל השכבות באותו רגע של שעון האודיו: התחלה ב-Play רגיל הייתה מפזרת אותן בין פריימים
+            // כל השלבים מתחילים יחד מהתחלת הלופ, בשקט, ורק העוצמות שלהם משתנות
             double at = AudioSettings.dspTime + 0.05;
             for (int i = 0; i < sources.Length; i++)
             {
@@ -138,20 +151,19 @@ namespace MotionArcade.Feedback
             {
                 float timeLeft = station.TimeLeft;
                 float round = station.RoundSeconds;
-                float pitch = TensionCurve.Pitch(timeLeft);
+                float pitch = speedUp ? TensionCurve.Pitch(timeLeft) : 1f;
                 for (int i = 0; i < sources.Length; i++)
                 {
-                    // שכבה ראשונה נכנסת מיד, השאר בהדרגה; השכבה האחרונה נכנסת מהר (רבע מהזמן), כמו אזעקה
-                    float fade = i == 0 ? 0.05f : i == sources.Length - 1 ? layerFade * 0.25f : layerFade;
-                    levels[i] = Mathf.MoveTowards(levels[i], TensionCurve.Layer(i, timeLeft, round), dt / fade);
+                    // העקומה עצמה כבר הדרגתית; כאן רק כדי שההתחלה לא תקפוץ מ-0
+                    levels[i] = Mathf.MoveTowards(levels[i], TensionCurve.Stage(i, sources.Length, timeLeft, round), dt / 0.3f);
                     sources[i].pitch = pitch;
                 }
 
-                int second = TensionCurve.TickSecond(timeLeft);
+                int second = clockTicks ? TensionCurve.TickSecond(timeLeft) : 0;
                 if (second != 0 && second != lastTick && tick != null)
                 {
                     lastTick = second;
-                    float urgency = (TensionCurve.FinalSeconds - second) / (TensionCurve.FinalSeconds - 1f);   // 0 ב-10, 1 ב-1
+                    float urgency = (TensionCurve.TickSeconds - second) / (TensionCurve.TickSeconds - 1f);   // 0 ב-10, 1 ב-1
                     tickSource.pitch = 1f + 0.5f * urgency;
                     tickSource.PlayOneShot(tick, tickVolume * (0.6f + 0.4f * urgency));
                 }

@@ -4979,6 +4979,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Interaction.HandHold
   shape: 0
+  moveHand: 0
+  handPosition: {x: 0, y: 0, z: 0}
+  handRotation: {x: 0, y: 0, z: 0}
 --- !u!1 &1075993113
 GameObject:
   m_ObjectHideFlags: 0
@@ -5710,16 +5713,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.TensionMusic
   station: {fileID: 979184184}
-  layers:
-  - {fileID: 8300000, guid: 86398d03dfb87c94e8cecc9ac7449f21, type: 3}
-  - {fileID: 8300000, guid: 2836ca4f8eb0a9641b95c65f1efdd859, type: 3}
-  - {fileID: 8300000, guid: 58e89c2f903933249b704566041c164f, type: 3}
-  - {fileID: 8300000, guid: 268fc41a06ba96943b146325a2bb1a94, type: 3}
+  stages:
+  - {fileID: 8300000, guid: af888f9b419488c408b20798e43afe2a, type: 3}
+  - {fileID: 8300000, guid: 18f5d789c43e95f4baa8572aaaeb9b31, type: 3}
+  - {fileID: 8300000, guid: 8d8ae9314d1874c4b945317eeb4dc4f1, type: 3}
   tick: {fileID: 8300000, guid: 322177cea9a3b6045b9907211c2f6ac6, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
-  volume: 0.7
+  clockTicks: 1
+  speedUp: 1
+  volume: 0.6
   tickVolume: 0.6
-  layerFade: 1.5
   stopFade: 0.5
 --- !u!1 &1181894009
 GameObject:

@@ -7989,16 +7989,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.TensionMusic
   station: {fileID: 1433841195}
-  layers:
-  - {fileID: 8300000, guid: 86398d03dfb87c94e8cecc9ac7449f21, type: 3}
-  - {fileID: 8300000, guid: 2836ca4f8eb0a9641b95c65f1efdd859, type: 3}
-  - {fileID: 8300000, guid: 58e89c2f903933249b704566041c164f, type: 3}
-  - {fileID: 8300000, guid: 268fc41a06ba96943b146325a2bb1a94, type: 3}
+  stages:
+  - {fileID: 8300000, guid: 3ee5b44ee24407243810d1b890e5a88e, type: 3}
+  - {fileID: 8300000, guid: 41f26f997c12b5a44a4a216d94918672, type: 3}
+  - {fileID: 8300000, guid: e3e75fc0f59d91747b20ae7c1f6f3c9e, type: 3}
   tick: {fileID: 8300000, guid: 322177cea9a3b6045b9907211c2f6ac6, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
-  volume: 0.7
+  clockTicks: 1
+  speedUp: 1
+  volume: 0.6
   tickVolume: 0.6
-  layerFade: 1.5
   stopFade: 0.5
 --- !u!1 &1856309140
 GameObject:
