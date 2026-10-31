@@ -57,6 +57,38 @@ namespace MotionArcade.Tests
         }
     }
 
+    // הרשת דוחפת חוטים מחוץ למסלול של הכדור בצעד: הנקודות הקרובות בין חוט לקטע המסלול
+    public class NetClosestTests
+    {
+        [Test]
+        public void CrossingSegments_MeetInTheMiddle()
+        {
+            HoopNet.Closest(new Vector3(-1f, 0f, 0f), new Vector3(1f, 0f, 0f), new Vector3(0f, -1f, 0.1f), new Vector3(0f, 1f, 0.1f),
+                out float t, out Vector3 onStrand, out Vector3 onPath);
+            Assert.That(t, Is.EqualTo(0.5f).Within(1e-5f));
+            Assert.That(Vector3.Distance(onStrand, Vector3.zero), Is.LessThan(1e-5f));
+            Assert.That(Vector3.Distance(onPath, new Vector3(0f, 0f, 0.1f)), Is.LessThan(1e-5f));
+        }
+
+        [Test]
+        public void ABallThatJumpedPastAStrand_StillFindsIt()
+        {
+            // הכדור עבר 7 ס"מ בצעד; החוט באמצע הדרך, 3 ס"מ מהקו: רחוק מהמרכז הקודם ומהנוכחי, קרוב למסלול
+            HoopNet.Closest(new Vector3(-0.1f, 0.03f, 0f), new Vector3(0.1f, 0.03f, 0f), new Vector3(0f, 0f, -0.035f), new Vector3(0f, 0f, 0.035f),
+                out _, out Vector3 onStrand, out Vector3 onPath);
+            Assert.That(Vector3.Distance(onStrand, onPath), Is.EqualTo(0.03f).Within(1e-5f));
+        }
+
+        [Test]
+        public void AStillBall_IsAPoint()
+        {
+            HoopNet.Closest(new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 1f), new Vector3(0.2f, 0f, 2f), new Vector3(0.2f, 0f, 2f),
+                out float t, out Vector3 onStrand, out _);
+            Assert.That(t, Is.EqualTo(1f));
+            Assert.That(onStrand, Is.EqualTo(new Vector3(0f, 0f, 1f)));
+        }
+    }
+
     public class BasketballScoringTests
     {
         [Test]

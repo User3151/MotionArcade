@@ -112,18 +112,54 @@ namespace MotionArcade.Tests
             Assert.That(ring, Is.Not.Null);
             Assert.That(ring.lossyScale.x, Is.EqualTo(1f).Within(1e-4f), "the radius is in metres");
             Assert.That(Vector3.Angle(ring.up, Vector3.up), Is.LessThan(0.5f));
-            var rim = ring.GetComponentsInChildren<CapsuleCollider>().Where(c => c.name.StartsWith("Rim")).ToArray();
-            Assert.That(rim.Length, Is.GreaterThanOrEqualTo(12));
+            // טבעת עגולה (טורוס) ולא 16 מקטעים ישרים: הכדור פוגע בה כמו בטבעת אמיתית
+            var rim = ring.Find("Rim").GetComponent<MeshCollider>();
+            Assert.That(rim, Is.Not.Null);
+            Assert.That(rim.convex, Is.False, "a ring, not its convex hull");
+            Assert.That(ring.Find("Rim").childCount, Is.EqualTo(0), "the old capsule segments are gone");
             float radius = Game.FindProperty("ringRadius").floatValue;
-            foreach (var c in rim)
+            float min = float.MaxValue, max = 0f, top = float.MinValue;
+            foreach (Vector3 v in rim.sharedMesh.vertices)
             {
-                Vector3 p = ring.InverseTransformPoint(c.transform.position);
-                Assert.That(new Vector2(p.x, p.z).magnitude, Is.EqualTo(radius).Within(0.005f), c.name);
-                Assert.That(p.y, Is.EqualTo(0f).Within(0.005f), c.name);
+                Vector3 p = ring.InverseTransformPoint(rim.transform.TransformPoint(v));
+                float d = new Vector2(p.x, p.z).magnitude;
+                min = Mathf.Min(min, d); max = Mathf.Max(max, d); top = Mathf.Max(top, p.y);
             }
+            Assert.That((min + max) * 0.5f, Is.EqualTo(radius).Within(0.002f), "the tube centre is the basket radius");
+            Assert.That((max - min) * 0.5f, Is.InRange(0.007f, 0.011f), "a rim rod of about 16-20 mm");
+            Assert.That(top, Is.EqualTo((max - min) * 0.5f).Within(0.002f), "centred on the ring plane");
             // החיישנים הישנים (מעל ומתחת לטבעת) הוסרו: כדור שעבר בטבעת פספס את התחתון ולא נספר
             Assert.That(ring.Find("Sensor Top"), Is.Null);
             Assert.That(ring.Find("Sensor Bottom"), Is.Null);
+        }
+
+        [Test]
+        public void TheNetIsLive_AndKnowsEveryBall()
+        {
+            var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
+            var net = ring.Find("Net").GetComponent<HoopNet>();
+            Assert.That(net, Is.Not.Null, "a simulated net, not a drawn one");
+            Assert.That(net.transform.localPosition, Is.EqualTo(Vector3.zero), "hangs from the ring plane");
+            var balls = new SerializedObject(net).FindProperty("balls");
+            var gameBalls = Game.FindProperty("balls");
+            Assert.That(balls.arraySize, Is.EqualTo(gameBalls.arraySize));
+            for (int i = 0; i < balls.arraySize; i++)
+                Assert.That(balls.GetArrayElementAtIndex(i).objectReferenceValue,
+                    Is.SameAs(((Component)gameBalls.GetArrayElementAtIndex(i).objectReferenceValue).GetComponent<Rigidbody>()));
+            Assert.That(net.GetComponent<Collider>(), Is.Null, "the net touches balls only through HoopNet, so it cannot bounce them");
+            var material = net.GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.That(material.GetFloat("_Cull"), Is.EqualTo(0f), "strands seen from both sides");
+        }
+
+        [Test]
+        public void TheBall_LooksLikeABasketball()
+        {
+            var ball = (Ball)Game.FindProperty("balls").GetArrayElementAtIndex(0).objectReferenceValue;
+            var material = ball.GetComponent<MeshRenderer>().sharedMaterial;
+            Assert.That(material.shader.name, Is.EqualTo("Universal Render Pipeline/Lit"));
+            Assert.That(material.GetTexture("_BaseMap"), Is.Not.Null, "orange with black seams");
+            Assert.That(material.GetTexture("_BumpMap"), Is.Not.Null, "pebbled grip and seam grooves");
+            Assert.That(ball.GetComponent<Rigidbody>().angularDamping, Is.LessThanOrEqualTo(0.15f), "the backspin lasts to the hoop, and shows");
         }
 
         [Test]
@@ -139,9 +175,8 @@ namespace MotionArcade.Tests
             Assert.That(board, Is.Not.Null);
             Assert.That(board.Kind, Is.EqualTo(SurfaceSound.Part.Backboard));
             Assert.That(board.Pick(), Is.Not.Null);
-            // כל קוליידר של הטבעת מוצא את הצליל שלה (ImpactSound מחפש בהורים)
-            foreach (var c in ring.Find("Rim").GetComponentsInChildren<Collider>())
-                Assert.That(c.GetComponentInParent<SurfaceSound>(), Is.SameAs(rim), c.name);
+            // הקוליידר של הטבעת מוצא את הצליל שלה (ImpactSound מחפש בהורים)
+            Assert.That(ring.Find("Rim").GetComponent<Collider>().GetComponentInParent<SurfaceSound>(), Is.SameAs(rim));
 
             Assert.That(Game.FindProperty("swishClip").objectReferenceValue, Is.Not.Null);
             var crowd = (AudioSource)Game.FindProperty("crowd").objectReferenceValue;
