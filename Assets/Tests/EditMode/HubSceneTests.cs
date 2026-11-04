@@ -92,5 +92,45 @@ namespace MotionArcade.Tests
             Assert.That(lights.Where(l => l.lightmapBakeType != LightmapBakeType.Baked).Select(l => l.name), Is.Empty);
             Assert.That(Find<LightProbeGroup>(), Is.Not.Null);
         }
+
+        [Test]
+        public void ArcadeMachines_StayOffTheGamesAndInsideTheRoom()
+        {
+            // המכונות לאורך הקירות. המשחקים נטענים מול השחקן (x עד 0.9, z עד 3.8), אז אסור שמכונה תיכנס לשם
+            var group = hub.GetRootGameObjects().First(g => g.name == "Arcade Room").transform.Find("Arcade Machines");
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.childCount, Is.GreaterThanOrEqualTo(12), "a room that looks full");
+            var games = new Bounds(new Vector3(0f, 1f, 2f), new Vector3(2.2f, 2f, 4.4f));
+            foreach (var box in group.GetComponentsInChildren<BoxCollider>())
+            {
+                Bounds b = box.bounds;
+                Assert.That(b.Intersects(games), Is.False, box.name + " stands in the games area");
+                Assert.That(Mathf.Max(Mathf.Abs(b.min.x), Mathf.Abs(b.max.x), Mathf.Abs(b.min.z), Mathf.Abs(b.max.z)), Is.LessThanOrEqualTo(6.0f), box.name + " is in a wall");
+                Assert.That(b.min.y, Is.GreaterThanOrEqualTo(-0.01f), box.name + " sinks into the floor");
+            }
+        }
+
+        [Test]
+        public void ArcadeMachines_AreLightAndLitByProbes()
+        {
+            // מודלים מ-Sketchfab "נאפים" (ArcadePropBaker): חלק לכל חומר ו-Mesh LOD; האולם אפוי, אז הם מקבלים אור מ-Light Probes
+            var prefabs = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Arcade" })
+                .Select(g => AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(g))).ToArray();
+            Assert.That(prefabs.Length, Is.GreaterThanOrEqualTo(6));
+            foreach (GameObject prefab in prefabs)
+            {
+                var renderers = prefab.GetComponentsInChildren<MeshRenderer>();
+                Assert.That(renderers.Length, Is.InRange(1, 25), prefab.name + ": one part per material");
+                Assert.That(prefab.GetComponent<BoxCollider>(), Is.Not.Null, prefab.name);
+                foreach (MeshRenderer r in renderers)
+                {
+                    Assert.That(r.receiveGI, Is.EqualTo(ReceiveGI.LightProbes), prefab.name + "/" + r.name);
+                    Assert.That(r.lightProbeUsage, Is.EqualTo(UnityEngine.Rendering.LightProbeUsage.BlendProbes), prefab.name + "/" + r.name);
+                    Mesh mesh = r.GetComponent<MeshFilter>().sharedMesh;
+                    Assert.That(mesh, Is.Not.Null, prefab.name + "/" + r.name);
+                    if (mesh.GetIndexCount(0) / 3 > 3000) Assert.That(mesh.lodCount, Is.GreaterThan(1), prefab.name + "/" + r.name + " has no Mesh LOD");
+                }
+            }
+        }
     }
 }

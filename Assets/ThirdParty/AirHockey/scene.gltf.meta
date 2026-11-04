@@ -1,0 +1,85 @@
+fileFormatVersion: 2
+guid: 897b7a621934b134a8dce45669b92d7e
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 715df9372183c47e389bb6e19fbc3b52, type: 3}
+  editorImportSettings:
+    generateSecondaryUVSet: 0
+  importSettings:
+    nodeNameMethod: 1
+    animationMethod: 2
+    generateMipMaps: 1
+    texturesReadable: 0
+    defaultMinFilterMode: 9729
+    defaultMagFilterMode: 9729
+    anisotropicFilterLevel: 1
+  instantiationSettings:
+    mask: -1
+    layer: 0
+    skinUpdateWhenOffscreen: 1
+    lightIntensityFactor: 1
+    sceneObjectCreation: 2
+  assetDependencies:
+  - type: 0
+    originalUri: Assets\ThirdParty\AirHockey\scene.bin
+    assetPath: Assets\ThirdParty\AirHockey\scene.bin
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Background_baseColor.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\Background_baseColor.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Support_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\Support_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Support_metallicRoughness.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\Support_metallicRoughness.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Support_normal.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\Support_normal.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Feet_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\Feet_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Feet_metallicRoughness.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\Feet_metallicRoughness.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Feet_normal.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\Feet_normal.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\ScorebordA1_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\ScorebordA1_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\ScorebordA1_metallicRoughness.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\ScorebordA1_metallicRoughness.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\ScorebordA1_normal.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\ScorebordA1_normal.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Pucker_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\Pucker_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\Glass_baseColor.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\Glass_baseColor.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\BodyA22_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\BodyA22_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\BodyA22_metallicRoughness.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\BodyA22_metallicRoughness.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\BodyA22_normal.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\BodyA22_normal.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\BodyA3_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\BodyA3_baseColor.jpeg
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\MetalA22_metallicRoughness.png
+    assetPath: Assets\ThirdParty\AirHockey\textures\MetalA22_metallicRoughness.png
+  - type: 1
+    originalUri: Assets\ThirdParty\AirHockey\textures\NumbersA123_baseColor.jpeg
+    assetPath: Assets\ThirdParty\AirHockey\textures\NumbersA123_baseColor.jpeg
+  reportItems: []

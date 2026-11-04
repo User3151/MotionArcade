@@ -1,0 +1,11 @@
+Model Information:
+* title:	NTGL Vegas 2047 Pinball
+* source:	https://sketchfab.com/3d-models/ntgl-vegas-2047-pinball-dcc261dbf3504df1ab765a83640f91b3
+* author:	Neberkenezer (https://sketchfab.com/neberkenezer)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "NTGL Vegas 2047 Pinball" (https://sketchfab.com/3d-models/ntgl-vegas-2047-pinball-dcc261dbf3504df1ab765a83640f91b3) by Neberkenezer (https://sketchfab.com/neberkenezer) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
