@@ -65,14 +65,16 @@ namespace MotionArcade.Diagnostics
         {
             yield return new WaitForSecondsRealtime(3f);   // האולם מתייצב (XR, shaders)
 
-            if (SceneLoader.Instance == null || !SceneLoader.Instance.Load(gameScene))
+            // כל המשחקים נטענים יחד בארקייד: מחכים לטעינה ובוחרים את המשחק לפי הסצנה שלו
+            if (SceneLoader.Instance == null)
             {
-                Finish("FAILED: could not load " + gameScene);
+                Finish("FAILED: no SceneLoader");
                 yield break;
             }
-            while (SceneLoader.Instance.IsBusy) yield return null;
+            while (!SceneLoader.Instance.AllLoaded) yield return null;
 
-            GameStation station = FindFirstObjectByType<GameStation>();
+            GameStation station = null;
+            foreach (GameStation s in GameStation.All) if (s.gameObject.scene.name == gameScene) station = s;
             if (station == null)
             {
                 Finish("FAILED: no GameStation in " + gameScene);

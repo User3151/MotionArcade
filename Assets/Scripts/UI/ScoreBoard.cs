@@ -5,7 +5,8 @@ using UnityEngine.UI;
 
 namespace MotionArcade.UI
 {
-    // הלוח של כל משחק: שם, הסבר, ספירה לאחור, זמן, ניקוד ותוצאה, עם START / STOP / BACK.
+    // הלוח של כל משחק: שם, הסבר, ספירה לאחור, זמן, ניקוד ותוצאה, עם START / STOP.
+    // (BACK הוסר: בארקייד יוצאים ממשחק פשוט כשהולכים מהעיגול שלו, ראו StationPresence.)
     // לא יודע כלום על המשחק עצמו, רק על GameStation, אז אותו לוח משמש את כל המשחקים.
     // הכפתורים יכולים לשבת בקנבס אחר מהתצוגה (בכדורסל: לוח גבוה מעל הסל, כפתורים ליד השחקן).
     public class ScoreBoard : MonoBehaviour
@@ -23,7 +24,6 @@ namespace MotionArcade.UI
         [SerializeField] private Button startButton;
         [SerializeField] private TMP_Text startLabel;
         [SerializeField] private Button stopButton;   // רק בזמן ספירה ומשחק: עוצר בלי לרשום את הסבב
-        [SerializeField] private Button backButton;   // תמיד: חזרה לאולם, גם באמצע סבב (שלא נרשם)
 
         [Header("Sound (optional)")]
         [SerializeField] private AudioSource sfx;
@@ -40,7 +40,6 @@ namespace MotionArcade.UI
             station.ScoreChanged += HandleScore;
             startButton.onClick.AddListener(station.StartRound);
             if (stopButton != null) stopButton.onClick.AddListener(station.AbortRound);
-            backButton.onClick.AddListener(Back);
         }
 
         private void OnDisable()
@@ -49,7 +48,6 @@ namespace MotionArcade.UI
             station.ScoreChanged -= HandleScore;
             startButton.onClick.RemoveListener(station.StartRound);
             if (stopButton != null) stopButton.onClick.RemoveListener(station.AbortRound);
-            backButton.onClick.RemoveListener(Back);
         }
 
         // ב-Start ולא ב-OnEnable: השעון של GameStation נוצר ב-Awake שלה, שיכול לרוץ אחרי ה-OnEnable כאן
@@ -147,10 +145,5 @@ namespace MotionArcade.UI
             return text;
         }
 
-        private void Back()
-        {
-            if (SceneLoader.Instance != null) SceneLoader.Instance.ReturnToHub();
-            else Debug.LogWarning("[ScoreBoard] No SceneLoader: open the Hub scene and load the game from there.", this);
-        }
     }
 }

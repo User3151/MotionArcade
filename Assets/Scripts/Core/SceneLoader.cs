@@ -5,20 +5,23 @@ using UnityEngine.SceneManagement;
 
 namespace MotionArcade.Core
 {
-    // טוען משחק מעל האולם (additive) ופורק אותו בחזרה. האולם, הריג, הסשן והתאורה נשארים טעונים כל הזמן,
-    // אז אין מסך שחור בין משחקים והשחקן לא "קופץ" למקום אחר.
-    // משחק אחד בכל פעם: טעינה של משחק חדש פורקת קודם את הקודם.
+    // הארקייד: האולם (הריג, הסשן, התאורה) והמשחקים, כל אחד בפינה שלו. כל המשחקים נטענים פעם אחת בהתחלה,
+    // additive, ונשארים טעונים: השחקן רואה אותם כל הזמן והולך אליהם. משחק נפתח כשעומדים על העיגול שלו
+    // (StationPresence), לא בטעינה.
     // רץ לפני שאר הסקריפטים בסצנה, כדי ש-Instance כבר קיים כשהם נרשמים לאירועים שלו ב-OnEnable
     [DefaultExecutionOrder(-500)]
     public class SceneLoader : MonoBehaviour
     {
+        [SerializeField] private string[] games =
+            { "Game_Basketball", "Game_Darts", "Game_Whack", "Game_BuzzWire" };
+
         public static SceneLoader Instance { get; private set; }
 
-        public string CurrentGame { get; private set; }   // ריק = באולם
-        public bool IsBusy { get; private set; }           // בזמן טעינה או פריקה לחיצות נוספות לא עושות כלום
+        public bool IsBusy { get; private set; }          // בזמן הטעינה הראשונה
+        public bool AllLoaded { get; private set; }
+        public string[] Games => games;
 
         public event Action<string> GameLoaded;
-        public event Action ReturnedToHub;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => Instance = null;
@@ -39,48 +42,27 @@ namespace MotionArcade.Core
             if (Instance == this) Instance = null;
         }
 
-        public bool Load(string sceneName)
-        {
-            if (IsBusy || string.IsNullOrEmpty(sceneName) || sceneName == CurrentGame) return false;
-            if (!Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogError($"[SceneLoader] '{sceneName}' is not in Build Settings.", this);
-                return false;
-            }
-            StartCoroutine(Switch(sceneName));
-            return true;
-        }
+        private void Start() => StartCoroutine(LoadAll());
 
-        public bool ReturnToHub()
-        {
-            if (IsBusy || string.IsNullOrEmpty(CurrentGame)) return false;
-            StartCoroutine(Switch(null));
-            return true;
-        }
+        public bool IsLoaded(string sceneName) => SceneManager.GetSceneByName(sceneName).isLoaded;
 
-        private IEnumerator Switch(string next)
+        private IEnumerator LoadAll()
         {
             IsBusy = true;
-
-            if (!string.IsNullOrEmpty(CurrentGame))
+            foreach (string game in games)
             {
-                AsyncOperation unload = SceneManager.UnloadSceneAsync(CurrentGame);
-                if (unload != null) yield return unload;
-                CurrentGame = null;
-                if (next == null) ReturnedToHub?.Invoke();
+                // ב-Editor אפשר לפתוח משחק ביד לפני Play: לא טוענים אותו פעמיים
+                if (IsLoaded(game)) { GameLoaded?.Invoke(game); continue; }
+                if (!Application.CanStreamedLevelBeLoaded(game))
+                {
+                    Debug.LogError($"[SceneLoader] '{game}' is not in Build Settings.", this);
+                    continue;
+                }
+                // האולם נשאר הסצנה הפעילה: ממנו מגיעים ה-skybox, ה-ambient וה-light probes
+                yield return SceneManager.LoadSceneAsync(game, LoadSceneMode.Additive);
+                GameLoaded?.Invoke(game);
             }
-
-            if (next != null)
-            {
-                AsyncOperation load = SceneManager.LoadSceneAsync(next, LoadSceneMode.Additive);
-                yield return load;
-                CurrentGame = next;
-                // האולם נשאר הסצנה הפעילה: ממנו מגיעים ה-skybox, ה-ambient וה-light probes.
-                // אובייקטים שהמשחק יוצר בזמן ריצה נכנסים לסצנה הפעילה, אז משחק שיוצר אובייקטים
-                // צריך לשים אותם תחת אובייקט בסצנה שלו, כדי שיפורקו איתה.
-                GameLoaded?.Invoke(next);
-            }
-
+            AllLoaded = true;
             IsBusy = false;
         }
     }

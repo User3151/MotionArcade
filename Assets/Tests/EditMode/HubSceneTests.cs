@@ -61,25 +61,78 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void Menu_GamesPointToScenesInBuild()
+        public void Loader_LoadsEveryGame_FromTheBuild()
         {
-            var menu = Find<HubMenu>();
-            Assert.That(menu, Is.Not.Null);
+            // כל המשחקים נטענים יחד בהתחלה ונשארים בפינות שלהם; הלוח בנקודת ההתחלה בלי כפתורי משחקים
+            var loader = Find<SceneLoader>();
+            Assert.That(loader, Is.Not.Null);
             var inBuild = EditorBuildSettings.scenes.Where(s => s.enabled)
                 .Select(s => System.IO.Path.GetFileNameWithoutExtension(s.path)).ToArray();
+            Assert.That(loader.Games, Is.EquivalentTo(Games));
+            foreach (string game in loader.Games) Assert.That(inBuild, Does.Contain(game), game + " is not in Build Settings");
+            var menu = Find<HubMenu>();
+            Assert.That(menu, Is.Not.Null);
+            Assert.That(menu.GetComponentsInChildren<UnityEngine.UI.Button>(true).Select(x => x.name),
+                Is.EquivalentTo(new[] { "Settings Button", "Exit Button", "Back Button" }), "settings and exit only");
+        }
 
-            var games = new SerializedObject(menu).FindProperty("games");
-            int playable = 0;
-            for (int i = 0; i < games.arraySize; i++)
+        [Test]
+        public void Player_WalksTurnsAndTeleports_ButNotDuringARound()
+        {
+            var rig = hub.GetRootGameObjects().First(g => g.name.StartsWith("XR Origin")).transform;
+            Transform loco = rig.Find("Locomotion");
+            Assert.That(loco.Find("Move").gameObject.activeSelf, Is.True, "left stick walks");
+            Assert.That(loco.Find("Teleportation").gameObject.activeSelf, Is.True, "right stick teleports");
+            var move = loco.Find("Move").GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Movement.ContinuousMoveProvider>();
+            Assert.That(move.moveSpeed, Is.InRange(1f, 2f), "a comfortable walk");
+            Assert.That(rig.GetComponent<CharacterController>().radius, Is.GreaterThanOrEqualTo(0.2f), "keeps the head out of the machines");
+            var lockC = rig.GetComponent<MotionArcade.Interaction.LocomotionLock>();
+            Assert.That(lockC, Is.Not.Null);
+            var locked = new SerializedObject(lockC).FindProperty("locked");
+            var names = Enumerable.Range(0, locked.arraySize).Select(i => locked.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
+            Assert.That(names, Has.None.Null);
+            Assert.That(names, Does.Contain(move));
+            Assert.That(names.OfType<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationProvider>(), Is.Not.Empty);
+            Assert.That(names.OfType<UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor>().Count(), Is.EqualTo(2), "both teleport rays");
+            var start = hub.GetRootGameObjects().First(g => g.name == "Arcade Room").transform.Find("Start Spot");
+            Assert.That(start, Is.Not.Null, "a circle to come back to the middle");
+            Assert.That(start.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationAnchor>(), Is.Not.Null);
+        }
+
+        [Test]
+        public void EveryGame_OpensFromItsCircle()
+        {
+            // עומדים על העיגול: מופיע לוח ה-START והמוזיקה מתחילה. לא עומדים: שלט "עמוד על העיגול"
+            int teleport = UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
+            WithGames(scenes =>
             {
-                var entry = games.GetArrayElementAtIndex(i);
-                Assert.That(entry.FindPropertyRelative("button").objectReferenceValue, Is.Not.Null, $"game {i} has no button");
-                string scene = entry.FindPropertyRelative("sceneName").stringValue;
-                if (string.IsNullOrEmpty(scene)) continue;
-                Assert.That(inBuild, Does.Contain(scene), scene + " is on the menu but not in Build Settings");
-                playable++;
-            }
-            Assert.That(playable, Is.GreaterThan(0));
+                foreach (Scene sc in scenes)
+                {
+                    Transform root = sc.GetRootGameObjects()[0].transform;
+                    Transform spot = root.Find("Play Spot");
+                    Assert.That(spot, Is.Not.Null, sc.name);
+                    Assert.That(spot.localPosition, Is.EqualTo(Vector3.zero), sc.name + ": where the game was built to be played");
+                    Assert.That(spot.localRotation, Is.EqualTo(Quaternion.identity), sc.name);
+                    var anchor = spot.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationAnchor>();
+                    Assert.That(anchor, Is.Not.Null, sc.name);
+                    Assert.That((int)anchor.interactionLayers, Is.EqualTo(teleport), sc.name + ": only the teleport ray");
+                    Assert.That(anchor.matchOrientation, Is.EqualTo(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.MatchOrientation.TargetUpAndForward), sc.name + ": lands facing the game");
+                    Assert.That(spot.GetComponent<Collider>(), Is.Not.Null, sc.name);
+
+                    var presence = root.GetComponent<StationPresence>();
+                    Assert.That(presence, Is.Not.Null, sc.name);
+                    var pso = new SerializedObject(presence);
+                    Assert.That(pso.FindProperty("station").objectReferenceValue, Is.SameAs(root.GetComponent<GameStation>()), sc.name);
+                    var present = pso.FindProperty("showWhenPresent");
+                    Assert.That(present.arraySize, Is.GreaterThan(0), sc.name);
+                    Assert.That(((GameObject)present.GetArrayElementAtIndex(0).objectReferenceValue).GetComponent<PhaseDock>(), Is.Not.Null, sc.name + ": the START panel");
+                    Assert.That(pso.FindProperty("showWhenAway").arraySize, Is.GreaterThan(0), sc.name + ": a sign when nobody plays");
+                    var music = (MotionArcade.Feedback.GameMusic)pso.FindProperty("music").objectReferenceValue;
+                    Assert.That(music, Is.Not.Null, sc.name);
+                    Assert.That(new SerializedObject(music).FindProperty("waitForPlayer").boolValue, Is.True, sc.name + ": four games, one music at a time");
+                    Assert.That(root.GetComponentsInChildren<UnityEngine.UI.Button>(true).Any(x => x.name == "Back Button"), Is.False, sc.name + ": you leave by walking away");
+                }
+            });
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,6 +27,21 @@ namespace MotionArcade.Core
 
         private RoundClock clock;
 
+        // כל המשחקים טעונים יחד בארקייד. AnyRunning: יש סבב פעיל באחד מהם (אז נועלים את ההליכה, כדי לא לזוז בטעות)
+        private static readonly List<GameStation> stations = new List<GameStation>();
+        public static IReadOnlyList<GameStation> All => stations;
+        public static bool AnyRunning
+        {
+            get
+            {
+                for (int i = 0; i < stations.Count; i++) if (stations[i].IsRunning) return true;
+                return false;
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => stations.Clear();
+
         public string GameId => gameId;
         public string DisplayName => displayName;
         public string Instructions => instructions;
@@ -48,6 +64,7 @@ namespace MotionArcade.Core
         {
             clock = new RoundClock(countdownSeconds, roundSeconds);
             clock.PhaseChanged += HandlePhaseChanged;
+            stations.Add(this);
         }
 
         protected virtual void Update()
@@ -59,6 +76,7 @@ namespace MotionArcade.Core
         // הסצנה נפרקת באמצע סבב (חזרה לאולם): סוגרים את הסבב בלי לדווח עליו
         protected virtual void OnDestroy()
         {
+            stations.Remove(this);
             if (clock == null) return;
             clock.PhaseChanged -= HandlePhaseChanged;
             if (clock.Phase == RoundPhase.Playing) OnPlayingEnded();
