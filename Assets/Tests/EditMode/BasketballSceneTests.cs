@@ -166,6 +166,11 @@ namespace MotionArcade.Tests
             Assert.That(material.GetTexture("_BaseMap"), Is.Not.Null, "orange with black seams");
             Assert.That(material.GetTexture("_BumpMap"), Is.Not.Null, "pebbled grip and seam grooves");
             Assert.That(ball.GetComponent<Rigidbody>().angularDamping, Is.LessThanOrEqualTo(0.15f), "the backspin lasts to the hoop, and shows");
+            // הכדור של Arman.Abgaryan (CC-BY): רק המראה. ה-mesh בקוטר של הקוליידר, אז הפיזיקה לא השתנתה
+            Mesh mesh = ball.GetComponent<MeshFilter>().sharedMesh;
+            Assert.That(AssetDatabase.GetAssetPath(mesh), Is.EqualTo("Assets/Meshes/Basketball.asset"));
+            Assert.That(mesh.bounds.size.x, Is.EqualTo(ball.GetComponent<SphereCollider>().radius * 2f).Within(0.005f), "what you see is what bounces");
+            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_BaseMap")), Does.StartWith("Assets/ThirdParty/BallArman/"));
         }
 
         [Test]

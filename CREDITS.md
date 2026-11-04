@@ -11,7 +11,7 @@
 ## Models
 - The controller hands (`Assets/Prefabs/Hands`) use the hand meshes from the Unity XR Hands package sample
   (Unity Companion License).
-- Arcade room machines, from Sketchfab under [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+- Arcade room machines and the basketball, from Sketchfab under [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
   Originals with their license files are in `Assets/ThirdParty`; the room uses baked copies
   (merged by material, rescaled, Mesh LOD) in `Assets/Prefabs/Arcade`. The neon colors of the cabinets
   were changed, and the sky spheres, a carpet and a human figure were removed.
@@ -25,5 +25,7 @@
     https://sketchfab.com/3d-models/ntgl-vegas-2047-pinball-dcc261dbf3504df1ab765a83640f91b3
   - "Air Hockey Arcade .glb (v0.9) FREE Low Poly" by [LordSamueliSolo](https://sketchfab.com/LadyLionStudios):
     https://sketchfab.com/3d-models/air-hockey-arcade-glb-v09-free-low-poly-1034b318b6724a34b92bdb88acf41cb7
+  - "Basketball" by [Arman.Abgaryan](https://sketchfab.com/Arman.Abgaryan), used for the basketballs (mesh re-centred,
+    textures halved to 2K): https://sketchfab.com/3d-models/basketball-c94d08a3c24349bbbbd7213532cd05ee
   - "Racing Arcade .glb (v0.9) FREE Low Poly" by [LordSamueliSolo](https://sketchfab.com/LadyLionStudios):
     https://sketchfab.com/3d-models/racing-arcade-glb-v09-free-low-poly-48f608d9414f43caa6599cbd94681087
