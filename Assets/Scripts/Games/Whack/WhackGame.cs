@@ -21,6 +21,7 @@ namespace MotionArcade.Games.Whack
         [Header("Mallets")]
         [SerializeField] private Mallet[] mallets;
         [SerializeField] private Transform[] malletSlots;   // אחד לכל פטיש, על השולחן
+        // במרחב של המשחק, לא של העולם: המשחק עומד בפינה שלו בארקייד
         [SerializeField] private Bounds table;
         [SerializeField] private Bounds playArea;
         [SerializeField] private float lostSeconds = 1.5f;
@@ -178,13 +179,13 @@ namespace MotionArcade.Games.Whack
             for (int i = 0; i < mallets.Length; i++)
             {
                 Mallet mallet = mallets[i];
-                if (mallet == null || mallet.IsHeld || table.Contains(mallet.Position))
+                if (mallet == null || mallet.IsHeld || table.Contains(transform.InverseTransformPoint(mallet.Position)))
                 {
                     lostTimers[i] = 0f;
                     continue;
                 }
                 bool resting = mallet.Velocity.sqrMagnitude < 0.05f * 0.05f;
-                lostTimers[i] = resting || !playArea.Contains(mallet.Position) ? lostTimers[i] + Time.deltaTime : 0f;
+                lostTimers[i] = resting || !playArea.Contains(transform.InverseTransformPoint(mallet.Position)) ? lostTimers[i] + Time.deltaTime : 0f;
                 if (lostTimers[i] <= lostSeconds) continue;
                 mallet.Teleport(malletSlots[i].position, malletSlots[i].rotation);
                 lostTimers[i] = 0f;
@@ -194,6 +195,7 @@ namespace MotionArcade.Games.Whack
 
         private void OnDrawGizmosSelected()
         {
+            Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = Color.green;
             Gizmos.DrawWireCube(table.center, table.size);
             Gizmos.color = Color.cyan;

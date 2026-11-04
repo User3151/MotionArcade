@@ -36,6 +36,12 @@ namespace MotionArcade.Tests
 
         private SerializedObject Game => new SerializedObject(game);
 
+        // המשחק עומד בפינה שלו בארקייד: הכל נבדק ביחס אליו (השורש = המקום שבו השחקן עומד, +Z = מולו)
+        private Vector3 L(Transform t) => game.transform.InverseTransformPoint(t.position);
+        private Vector3 L(Vector3 world) => game.transform.InverseTransformPoint(world);
+        private Vector3 LD(Vector3 direction) => game.transform.InverseTransformDirection(direction);
+
+
         [Test]
         public void AimAssist_AimsAtTheRimCentre()
         {
@@ -98,7 +104,7 @@ namespace MotionArcade.Tests
             var slots = Game.FindProperty("traySlots");
             for (int i = 0; i < slots.arraySize; i++)
             {
-                Vector3 p = ((Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue).position;
+                Vector3 p = L((Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue);
                 Assert.That(tray.Contains(p), Is.True, $"slot {i} at {p} is outside the tray");
                 Assert.That(machine.Contains(p), Is.True);
             }
@@ -229,9 +235,9 @@ namespace MotionArcade.Tests
             var running = (Transform)so.FindProperty("runningPose").objectReferenceValue;
             Assert.That(idle, Is.Not.Null);
             Assert.That(running, Is.Not.Null);
-            Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f), "centred");
-            Assert.That(idle.position.z, Is.InRange(0.6f, 1.5f), "within arm's reach of the ray, in front of the player");
-            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
+            Assert.That(Mathf.Abs(L(idle).x), Is.LessThan(0.1f), "centred");
+            Assert.That(L(idle).z, Is.InRange(0.6f, 1.5f), "within arm's reach of the ray, in front of the player");
+            Assert.That(Mathf.Abs(L(running).x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
             Assert.That(new SerializedObject(dock).FindProperty("runningScale").floatValue, Is.LessThan(0.8f), "smaller during play");
         }
 

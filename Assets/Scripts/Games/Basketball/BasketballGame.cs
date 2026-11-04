@@ -22,7 +22,8 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private Transform ring;                // מרכז הטבעת, y למעלה
         [SerializeField] private float ringRadius = 0.229f;     // עד מרכז הצינור של הטבעת (רדיוס חוקי 22.9 ס"מ)
 
-        [Header("Machine bounds (world space)")]
+        // במרחב של המשחק (ה-Transform שלו), לא של העולם: המשחק עומד בפינה שלו בארקייד, ואפשר להזיז אותו
+        [Header("Machine bounds (game space)")]
         [SerializeField] private Bounds machine;   // כל הנפח של המכונה, כולל מעל הסל. כדור מחוץ לזה = הלך לאיבוד
         [SerializeField] private Bounds tray;      // המגש: כדור שעומד כאן במקום שלו, לא "תקוע"
 
@@ -85,8 +86,8 @@ namespace MotionArcade.Games.Basketball
 
         protected override void OnPlayingEnded() { }
 
-        public bool InsideMachine(Vector3 position) => machine.Contains(position);
-        public bool InTray(Vector3 position) => tray.Contains(position);
+        public bool InsideMachine(Vector3 position) => machine.Contains(transform.InverseTransformPoint(position));
+        public bool InTray(Vector3 position) => tray.Contains(transform.InverseTransformPoint(position));
 
         // נקרא מכל כדור שלא ביד, בכל צעד פיזיקה, עם המרכז שלו בצעד הקודם ובנוכחי.
         // true = הזריקה הזו נגמרה מבחינת סל: נספר סל, או שהכדור עלה דרך הטבעת מלמטה (אז הירידה שאחרי לא נספרת).
@@ -136,7 +137,7 @@ namespace MotionArcade.Games.Basketball
         // המגש מלא: מפילים מעל מרכז המגש עם הסטה קטנה לצד. בלי ההסטה כדור יכול לנחות בדיוק על כדור אחר
         // ולהישאר מאוזן עליו, כי הפיזיקה מדויקת מדי.
         private Vector3 DropAboveTray() =>
-            tray.center + new Vector3(Random.Range(-0.3f, 0.3f), 0.35f, Random.Range(-0.04f, 0.04f));
+            transform.TransformPoint(tray.center + new Vector3(Random.Range(-0.3f, 0.3f), 0.35f, Random.Range(-0.04f, 0.04f)));
 
         private bool IsFree(Vector3 slot, Ball self)
         {
@@ -151,6 +152,7 @@ namespace MotionArcade.Games.Basketball
 
         private void OnDrawGizmosSelected()
         {
+            Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireCube(machine.center, machine.size);
             Gizmos.color = Color.green;

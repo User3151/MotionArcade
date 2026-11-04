@@ -30,6 +30,11 @@ namespace MotionArcade.Tests
             so = new SerializedObject(game);
         }
 
+// המשחק עומד בפינה שלו בארקייד: הכל נבדק ביחס אליו (השורש = המקום שבו השחקן עומד, +Z = מולו)
+        private Vector3 L(Transform t) => game.transform.InverseTransformPoint(t.position);
+        private Vector3 L(Vector3 world) => game.transform.InverseTransformPoint(world);
+        private Vector3 LD(Vector3 direction) => game.transform.InverseTransformDirection(direction);
+
         [OneTimeTearDown]
         public void Close()
         {
@@ -41,13 +46,13 @@ namespace MotionArcade.Tests
         {
             var board = (DartBoard)so.FindProperty("board").objectReferenceValue;
             Assert.That(board, Is.Not.Null);
-            Assert.That(board.transform.position.y, Is.EqualTo(1.73f).Within(0.005f), "bull height");
+            Assert.That(L(board.transform).y, Is.EqualTo(1.73f).Within(0.005f), "bull height");
             // גיא, אחרי מדידה: הלוח התקני (2.37 מ', רדיוס 17 ס"מ) רחוק וקטן מדי לזריקה בלי משקל ביד
-            Assert.That(board.transform.position.z, Is.EqualTo(2.0f).Within(0.005f), "throwing distance from the stand spot");
+            Assert.That(L(board.transform).z, Is.EqualTo(2.0f).Within(0.005f), "throwing distance from the stand spot");
             Assert.That(board.Size, Is.EqualTo(1.3f).Within(1e-4f), "30% bigger than regulation");
             Assert.That(board.transform.Find("Face").localScale.x, Is.EqualTo(0.451f * board.Size).Within(0.002f), "the drawn board matches the scoring size");
             Assert.That(board.ScoreAt(board.transform.TransformPoint(0f, 0.15f, 0f)).Number, Is.EqualTo(20), "15 cm up is still inside the 20 (17 cm x 1.3)");
-            Assert.That(Vector3.Angle(board.transform.forward, Vector3.forward), Is.LessThan(1f), "face toward -Z, the player");
+            Assert.That(Vector3.Angle(LD(board.transform.forward), Vector3.forward), Is.LessThan(1f), "face toward -Z, the player");
             Assert.That(board.StickSurface, Is.Not.Null);
             Assert.That(board.StickSurface.isTrigger, Is.False, "a glancing dart must bounce off it");
             // משטח הנעיצה מתחיל בדיוק בפני הלוח, כדי שהחוד ננעץ בגובה הלוח
@@ -81,8 +86,8 @@ namespace MotionArcade.Tests
                 Assert.That(thrower.FindProperty("source").enumValueIndex, Is.EqualTo(0), "speed from the hand's peak");
                 Assert.That(thrower.FindProperty("velocityScale").floatValue, Is.EqualTo(1f).Within(1e-4f));
                 var slot = (Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue;
-                Assert.That(holder.Contains(slot.position), Is.True, $"slot {i} outside the holder bounds");
-                Assert.That(Vector3.Angle(slot.forward, Vector3.forward), Is.LessThan(1f), "darts lie pointing at the board");
+                Assert.That(holder.Contains(L(slot)), Is.True, $"slot {i} outside the holder bounds");
+                Assert.That(Vector3.Angle(LD(slot.forward), Vector3.forward), Is.LessThan(1f), "darts lie pointing at the board");
             }
         }
 
@@ -121,13 +126,13 @@ namespace MotionArcade.Tests
             var dso = new SerializedObject(dock);
             var idle = (Transform)dso.FindProperty("idlePose").objectReferenceValue;
             var running = (Transform)dso.FindProperty("runningPose").objectReferenceValue;
-            Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
+            Assert.That(Mathf.Abs(L(idle).x), Is.LessThan(0.1f));
+            Assert.That(Mathf.Abs(L(running).x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
             // הלוח המרכזי לא מסתיר את מרכז לוח החצים מעין בגובה 1.6 מ'
             var rt = (RectTransform)dock.transform;
-            float topEdge = idle.position.y + rt.rect.height * rt.lossyScale.y * 0.5f;
+            float topEdge = L(idle).y + rt.rect.height * rt.lossyScale.y * 0.5f;
             var board = (DartBoard)so.FindProperty("board").objectReferenceValue;
-            float sightAtPanel = 1.6f + (1.73f - 1.6f) * idle.position.z / board.transform.position.z;
+            float sightAtPanel = 1.6f + (1.73f - 1.6f) * L(idle).z / L(board.transform).z;
             Assert.That(topEdge, Is.LessThan(sightAtPanel));
         }
 

@@ -16,6 +16,7 @@ namespace MotionArcade.Games.Darts
         [Header("Darts")]
         [SerializeField] private Dart[] darts;
         [SerializeField] private Transform[] holderSlots;
+        // במרחב של המשחק, לא של העולם: המשחק עומד בפינה שלו בארקייד
         [SerializeField] private Bounds holder;       // חץ שנח כאן זמין לשחקן
         [SerializeField] private Bounds playArea;     // חץ מחוץ לזה הלך לאיבוד
         [SerializeField] private float returnAllDelay = 1f;
@@ -181,7 +182,8 @@ namespace MotionArcade.Games.Darts
                         lostTimers[i] = 0f;
                         break;
                     default:
-                        if (holder.Contains(dart.Position))
+                        Vector3 local = transform.InverseTransformPoint(dart.Position);
+                        if (holder.Contains(local))
                         {
                             inHolder++;
                             lostTimers[i] = 0f;
@@ -189,7 +191,7 @@ namespace MotionArcade.Games.Darts
                         }
                         // על הרצפה, מתחת ללוח, או מחוץ לאזור: השחקן לא יכול להגיע אליו
                         bool resting = dart.Velocity.sqrMagnitude < 0.05f * 0.05f;
-                        lostTimers[i] = resting || !playArea.Contains(dart.Position) ? lostTimers[i] + Time.deltaTime : 0f;
+                        lostTimers[i] = resting || !playArea.Contains(local) ? lostTimers[i] + Time.deltaTime : 0f;
                         if (lostTimers[i] > lostSeconds)
                         {
                             ReturnOne(dart);
@@ -238,6 +240,7 @@ namespace MotionArcade.Games.Darts
 
         private void OnDrawGizmosSelected()
         {
+            Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = Color.green;
             Gizmos.DrawWireCube(holder.center, holder.size);
             Gizmos.color = Color.cyan;

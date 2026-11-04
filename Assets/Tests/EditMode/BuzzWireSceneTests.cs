@@ -43,10 +43,15 @@ namespace MotionArcade.Tests
             return Enumerable.Range(0, p.arraySize).Select(i => (WireTrack)p.GetArrayElementAtIndex(i).objectReferenceValue).ToArray();
         }
 
-        private static Vector3[] Samples(WireTrack track)
+// המשחק עומד בפינה שלו בארקייד: הכל נבדק ביחס אליו (השורש = המקום שבו השחקן עומד, +Z = מולו)
+        private Vector3 L(Transform t) => game.transform.InverseTransformPoint(t.position);
+        private Vector3 L(Vector3 world) => game.transform.InverseTransformPoint(world);
+        private Vector3 LD(Vector3 direction) => game.transform.InverseTransformDirection(direction);
+
+        private Vector3[] Samples(WireTrack track)
         {
             var container = (SplineContainer)new SerializedObject(track).FindProperty("container").objectReferenceValue;
-            return Enumerable.Range(0, 101).Select(i => (Vector3)container.EvaluatePosition(i / 100f)).ToArray();
+            return Enumerable.Range(0, 101).Select(i => L((Vector3)container.EvaluatePosition(i / 100f))).ToArray();
         }
 
         [Test]
@@ -110,8 +115,8 @@ namespace MotionArcade.Tests
             Assert.That(so.FindProperty("trackButton").objectReferenceValue, Is.Not.Null);
             var dock = scene.GetRootGameObjects().Select(r => r.GetComponentInChildren<PhaseDock>(true)).First(d => d != null);
             var dso = new SerializedObject(dock);
-            Assert.That(Mathf.Abs(((Transform)dso.FindProperty("idlePose").objectReferenceValue).position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(((Transform)dso.FindProperty("runningPose").objectReferenceValue).position.x), Is.LessThan(0.1f), "stays in view during play");
+            Assert.That(Mathf.Abs(L((Transform)dso.FindProperty("idlePose").objectReferenceValue).x), Is.LessThan(0.1f));
+            Assert.That(Mathf.Abs(L((Transform)dso.FindProperty("runningPose").objectReferenceValue).x), Is.LessThan(0.1f), "stays in view during play");
         }
 
         [Test]

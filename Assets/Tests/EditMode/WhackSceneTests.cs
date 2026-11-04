@@ -30,6 +30,11 @@ namespace MotionArcade.Tests
             so = new SerializedObject(game);
         }
 
+// המשחק עומד בפינה שלו בארקייד: הכל נבדק ביחס אליו (השורש = המקום שבו השחקן עומד, +Z = מולו)
+        private Vector3 L(Transform t) => game.transform.InverseTransformPoint(t.position);
+        private Vector3 L(Vector3 world) => game.transform.InverseTransformPoint(world);
+        private Vector3 LD(Vector3 direction) => game.transform.InverseTransformDirection(direction);
+
         [OneTimeTearDown]
         public void Close()
         {
@@ -50,7 +55,8 @@ namespace MotionArcade.Tests
             Assert.That(holes, Has.None.Null);
             foreach (var h in holes)
             {
-                Vector3 p = h.transform.position;
+                Vector3 p = L(h.transform);
+                Vector3 normal = LD(h.Normal);
                 float horizontal = new Vector2(p.x, p.z).magnitude;
                 Assert.That(horizontal, Is.InRange(0.45f, 0.65f), h.name);
                 // גיא היה צריך לצעוד אחורה כדי לראות את כולם ולהישען כדי להגיע: בדיקה מנקודת העמידה
@@ -61,13 +67,13 @@ namespace MotionArcade.Tests
                 Assert.That(Vector3.Distance(shoulder, p), Is.LessThanOrEqualTo(0.65f), h.name + ": arm plus a 30 cm mallet, no leaning");
                 Assert.That(p.y, Is.InRange(0.95f, 1.6f), h.name);
                 // הפתח פונה אל השחקן ולמעלה: מכה מלמעלה ולפנים נכנסת לחור
-                Assert.That(Vector3.Dot(h.Normal, -new Vector3(p.x, 0f, p.z).normalized), Is.GreaterThan(0.3f), h.name + " faces the player");
-                Assert.That(h.Normal.y, Is.GreaterThan(0.3f), h.name + " tilts up");
+                Assert.That(Vector3.Dot(normal, -new Vector3(p.x, 0f, p.z).normalized), Is.GreaterThan(0.3f), h.name + " faces the player");
+                Assert.That(normal.y, Is.GreaterThan(0.3f), h.name + " tilts up");
             }
             // גם שמאל וגם ימין, גם נמוך וגם גבוה: הטווח של התנועה
-            Assert.That(holes.Min(h => h.transform.position.x), Is.LessThan(-0.3f));
-            Assert.That(holes.Max(h => h.transform.position.x), Is.GreaterThan(0.3f));
-            Assert.That(holes.Max(h => h.transform.position.y) - holes.Min(h => h.transform.position.y), Is.GreaterThan(0.25f));
+            Assert.That(holes.Min(h => L(h.transform).x), Is.LessThan(-0.3f));
+            Assert.That(holes.Max(h => L(h.transform).x), Is.GreaterThan(0.3f));
+            Assert.That(holes.Max(h => L(h.transform).y) - holes.Min(h => L(h.transform).y), Is.GreaterThan(0.25f));
         }
 
         [Test]
@@ -104,8 +110,8 @@ namespace MotionArcade.Tests
                 Assert.That(grab.attachTransform, Is.Not.Null, m.name + ": held at the handle");
                 Assert.That(grab.throwOnDetach, Is.False, m.name);
                 var slot = (Transform)slots.GetArrayElementAtIndex(i).objectReferenceValue;
-                Assert.That(table.Contains(slot.position), Is.True, m.name + " slot");
-                Assert.That(slot.position.z, Is.GreaterThan(0.15f), "not inside the player's body");
+                Assert.That(table.Contains(L(slot)), Is.True, m.name + " slot");
+                Assert.That(L(slot).z, Is.GreaterThan(0.15f), "not inside the player's body");
             }
         }
 
@@ -116,8 +122,8 @@ namespace MotionArcade.Tests
             var dso = new SerializedObject(dock);
             var idle = (Transform)dso.FindProperty("idlePose").objectReferenceValue;
             var running = (Transform)dso.FindProperty("runningPose").objectReferenceValue;
-            Assert.That(Mathf.Abs(idle.position.x), Is.LessThan(0.1f));
-            Assert.That(Mathf.Abs(running.position.x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
+            Assert.That(Mathf.Abs(L(idle).x), Is.LessThan(0.1f));
+            Assert.That(Mathf.Abs(L(running).x), Is.LessThan(0.1f), "stays in view during play (not moved to the side)");
         }
 
         [Test]

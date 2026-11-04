@@ -93,21 +93,74 @@ namespace MotionArcade.Tests
             Assert.That(Find<LightProbeGroup>(), Is.Not.Null);
         }
 
+        public static readonly string[] Games = { "Game_Basketball", "Game_Darts", "Game_Whack", "Game_BuzzWire" };
+        private const float RoomHalfX = 10f, RoomHalfZ = 8f;
+
+        // כל משחק בפינה שלו: הנפח שלו (כולל הלוחות) ועוד מקום לעמוד מולו, בעולם
+        private static Bounds GameArea(Scene game)
+        {
+            Transform root = game.GetRootGameObjects()[0].transform;
+            var b = new Bounds(root.position + Vector3.up, new Vector3(1.2f, 2f, 1.2f));   // השחקן
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true)) b.Encapsulate(r.bounds);
+            var corners = new Vector3[4];
+            foreach (Canvas c in root.GetComponentsInChildren<Canvas>(true))
+            {
+                ((RectTransform)c.transform).GetWorldCorners(corners);
+                foreach (Vector3 p in corners) b.Encapsulate(p);
+            }
+            return b;
+        }
+
+        private static void WithGames(System.Action<Scene[]> check)
+        {
+            var opened = new System.Collections.Generic.List<Scene>();
+            var scenes = Games.Select(n =>
+            {
+                Scene sc = SceneManager.GetSceneByPath($"Assets/Scenes/{n}.unity");
+                if (!sc.isLoaded) { sc = EditorSceneManager.OpenScene($"Assets/Scenes/{n}.unity", OpenSceneMode.Additive); opened.Add(sc); }
+                return sc;
+            }).ToArray();
+            try { check(scenes); }
+            finally { foreach (Scene sc in opened) EditorSceneManager.CloseScene(sc, true); }
+        }
+
+        [Test]
+        public void Games_StandInsideTheRoom_ApartFromEachOther()
+        {
+            WithGames(scenes =>
+            {
+                var areas = scenes.Select(GameArea).ToArray();
+                for (int i = 0; i < areas.Length; i++)
+                {
+                    Bounds b = areas[i];
+                    Assert.That(Mathf.Max(-b.min.x, b.max.x), Is.LessThanOrEqualTo(RoomHalfX), Games[i] + " is in a wall");
+                    Assert.That(Mathf.Max(-b.min.z, b.max.z), Is.LessThanOrEqualTo(RoomHalfZ), Games[i] + " is in a wall");
+                    for (int j = i + 1; j < areas.Length; j++) Assert.That(b.Intersects(areas[j]), Is.False, Games[i] + " and " + Games[j]);
+                    // השחקן מתחיל במרכז: אף משחק לא עליו
+                    Assert.That(b.Contains(new Vector3(0f, 1f, 0f)), Is.False, Games[i]);
+                }
+            });
+        }
+
         [Test]
         public void ArcadeMachines_StayOffTheGamesAndInsideTheRoom()
         {
-            // המכונות לאורך הקירות. המשחקים נטענים מול השחקן (x עד 0.9, z עד 3.8), אז אסור שמכונה תיכנס לשם
+            // מכונות הנוי על הקירות שבין המשחקים: אף אחת לא בתוך משחק או במקום שעומדים בו מולו
             var group = hub.GetRootGameObjects().First(g => g.name == "Arcade Room").transform.Find("Arcade Machines");
             Assert.That(group, Is.Not.Null);
             Assert.That(group.childCount, Is.GreaterThanOrEqualTo(12), "a room that looks full");
-            var games = new Bounds(new Vector3(0f, 1f, 2f), new Vector3(2.2f, 2f, 4.4f));
-            foreach (var box in group.GetComponentsInChildren<BoxCollider>())
+            WithGames(scenes =>
             {
-                Bounds b = box.bounds;
-                Assert.That(b.Intersects(games), Is.False, box.name + " stands in the games area");
-                Assert.That(Mathf.Max(Mathf.Abs(b.min.x), Mathf.Abs(b.max.x), Mathf.Abs(b.min.z), Mathf.Abs(b.max.z)), Is.LessThanOrEqualTo(6.0f), box.name + " is in a wall");
-                Assert.That(b.min.y, Is.GreaterThanOrEqualTo(-0.01f), box.name + " sinks into the floor");
-            }
+                var areas = scenes.Select(GameArea).ToArray();
+                foreach (var box in group.GetComponentsInChildren<BoxCollider>())
+                {
+                    Bounds b = box.bounds;
+                    for (int i = 0; i < areas.Length; i++) Assert.That(b.Intersects(areas[i]), Is.False, box.name + " stands in " + Games[i]);
+                    Assert.That(Mathf.Max(-b.min.x, b.max.x), Is.LessThanOrEqualTo(RoomHalfX), box.name + " is in a wall");
+                    Assert.That(Mathf.Max(-b.min.z, b.max.z), Is.LessThanOrEqualTo(RoomHalfZ), box.name + " is in a wall");
+                    Assert.That(b.min.y, Is.GreaterThanOrEqualTo(-0.01f), box.name + " sinks into the floor");
+                }
+            });
         }
 
         [Test]
