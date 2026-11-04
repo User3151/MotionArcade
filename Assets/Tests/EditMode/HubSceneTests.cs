@@ -131,6 +131,11 @@ namespace MotionArcade.Tests
                     Assert.That(music, Is.Not.Null, sc.name);
                     Assert.That(new SerializedObject(music).FindProperty("waitForPlayer").boolValue, Is.True, sc.name + ": four games, one music at a time");
                     Assert.That(root.GetComponentsInChildren<UnityEngine.UI.Button>(true).Any(x => x.name == "Back Button"), Is.False, sc.name + ": you leave by walking away");
+                    // מה שמסמן משחק שאפשר לשחק בו (מכונות הנוי בלי אף אחד מאלה): שלט ניאון ועיגול שפועם
+                    Assert.That(root.Find("Neon Sign"), Is.Not.Null, sc.name);
+                    var glow = spot.GetComponent<PlaySpotGlow>();
+                    Assert.That(glow, Is.Not.Null, sc.name);
+                    Assert.That(new SerializedObject(glow).FindProperty("presence").objectReferenceValue, Is.SameAs(presence), sc.name + ": calms down when someone stands on it");
                 }
             });
         }
