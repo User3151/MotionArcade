@@ -100,44 +100,71 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void EveryGame_OpensFromItsCircle()
+        public void EveryGame_OpensWithPlay_AndClosesWithExit()
         {
-            // עומדים על העיגול: מופיע לוח ה-START והמוזיקה מתחילה. לא עומדים: שלט "עמוד על העיגול"
+            // גיא: מגיעים לעיגול מול המשחק, לוחצים PLAY בקיוסק, מסך שחור, ואתה בעמדת המשחק; EXIT מחזיר אותך
             int teleport = UnityEngine.XR.Interaction.Toolkit.InteractionLayerMask.GetMask("Teleport");
             WithGames(scenes =>
             {
                 foreach (Scene sc in scenes)
                 {
                     Transform root = sc.GetRootGameObjects()[0].transform;
-                    Transform spot = root.Find("Play Spot");
+                    Assert.That(root.Find("Play Spot"), Is.Null, sc.name + ": no circle at the playing spot any more");
+                    Transform spot = root.Find("Approach Spot");
                     Assert.That(spot, Is.Not.Null, sc.name);
-                    Assert.That(spot.localPosition, Is.EqualTo(Vector3.zero), sc.name + ": where the game was built to be played");
+                    Assert.That(spot.localPosition.z, Is.InRange(-1.6f, -1.0f), sc.name + ": behind the playing spot, facing the game");
+                    Assert.That(Mathf.Abs(spot.localPosition.x), Is.LessThan(0.01f), sc.name);
                     Assert.That(spot.localRotation, Is.EqualTo(Quaternion.identity), sc.name);
                     var anchor = spot.GetComponent<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationAnchor>();
                     Assert.That(anchor, Is.Not.Null, sc.name);
                     Assert.That((int)anchor.interactionLayers, Is.EqualTo(teleport), sc.name + ": only the teleport ray");
                     Assert.That(anchor.matchOrientation, Is.EqualTo(UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.MatchOrientation.TargetUpAndForward), sc.name + ": lands facing the game");
-                    Assert.That(spot.GetComponent<Collider>(), Is.Not.Null, sc.name);
 
                     var presence = root.GetComponent<StationPresence>();
                     Assert.That(presence, Is.Not.Null, sc.name);
                     var pso = new SerializedObject(presence);
                     Assert.That(pso.FindProperty("station").objectReferenceValue, Is.SameAs(root.GetComponent<GameStation>()), sc.name);
+                    var kiosk = (GameObject)pso.FindProperty("playScreen").objectReferenceValue;
+                    Assert.That(kiosk, Is.Not.Null, sc.name + ": a kiosk with PLAY");
+                    Assert.That(root.InverseTransformPoint(kiosk.transform.position).z, Is.InRange(spot.localPosition.z, 0f), sc.name + ": between the circle and the game");
+                    var screen = kiosk.GetComponentInChildren<Canvas>(true);
+                    Assert.That(screen, Is.Not.Null, sc.name);
+                    Assert.That(root.InverseTransformPoint(screen.transform.position).y, Is.InRange(1.0f, 1.5f), sc.name + ": the PLAY screen at chest height (once it was left on the floor)");
+                    var play = (UnityEngine.UI.Button)pso.FindProperty("playButton").objectReferenceValue;
+                    Assert.That(play, Is.Not.Null, sc.name);
+                    Assert.That(play.transform.IsChildOf(kiosk.transform), Is.True, sc.name);
                     var present = pso.FindProperty("showWhenPresent");
                     Assert.That(present.arraySize, Is.GreaterThan(0), sc.name);
-                    Assert.That(((GameObject)present.GetArrayElementAtIndex(0).objectReferenceValue).GetComponent<PhaseDock>(), Is.Not.Null, sc.name + ": the START panel");
-                    Assert.That(pso.FindProperty("showWhenAway").arraySize, Is.GreaterThan(0), sc.name + ": a sign when nobody plays");
+                    var controls = (GameObject)present.GetArrayElementAtIndex(0).objectReferenceValue;
+                    Assert.That(controls.GetComponent<PhaseDock>(), Is.Not.Null, sc.name + ": the START panel");
+                    var exit = (UnityEngine.UI.Button)pso.FindProperty("exitButton").objectReferenceValue;
+                    Assert.That(exit, Is.Not.Null, sc.name);
+                    Assert.That(exit.transform.IsChildOf(controls.transform), Is.True, sc.name + ": EXIT on the game panel");
                     var music = (MotionArcade.Feedback.GameMusic)pso.FindProperty("music").objectReferenceValue;
                     Assert.That(music, Is.Not.Null, sc.name);
-                    Assert.That(new SerializedObject(music).FindProperty("waitForPlayer").boolValue, Is.True, sc.name + ": four games, one music at a time");
-                    Assert.That(root.GetComponentsInChildren<UnityEngine.UI.Button>(true).Any(x => x.name == "Back Button"), Is.False, sc.name + ": you leave by walking away");
+                    Assert.That(new SerializedObject(music).FindProperty("waitForPlayer").boolValue, Is.True, sc.name + ": music starts with PLAY");
+                    Assert.That(root.GetComponentsInChildren<UnityEngine.UI.Button>(true).Any(x => x.name == "Back Button"), Is.False, sc.name);
                     // מה שמסמן משחק שאפשר לשחק בו (מכונות הנוי בלי אף אחד מאלה): שלט ניאון ועיגול שפועם
                     Assert.That(root.Find("Neon Sign"), Is.Not.Null, sc.name);
                     var glow = spot.GetComponent<PlaySpotGlow>();
                     Assert.That(glow, Is.Not.Null, sc.name);
-                    Assert.That(new SerializedObject(glow).FindProperty("presence").objectReferenceValue, Is.SameAs(presence), sc.name + ": calms down when someone stands on it");
+                    Assert.That(new SerializedObject(glow).FindProperty("presence").objectReferenceValue, Is.SameAs(presence), sc.name);
                 }
             });
+        }
+
+        [Test]
+        public void TheCamera_CanFadeToBlack()
+        {
+            var fader = Find<ScreenFader>();
+            Assert.That(fader, Is.Not.Null);
+            var cam = fader.GetComponentInParent<Camera>();
+            Assert.That(cam, Is.Not.Null, "follows the head");
+            var sphere = (Renderer)new SerializedObject(fader).FindProperty("sphere").objectReferenceValue;
+            Assert.That(sphere, Is.Not.Null);
+            Assert.That(sphere.bounds.extents.x, Is.GreaterThan(cam.nearClipPlane * 4f), "outside the near clip plane");
+            Assert.That(sphere.bounds.extents.x, Is.LessThan(0.3f), "closer than the hands");
+            Assert.That(sphere.sharedMaterial.GetFloat("_Cull"), Is.EqualTo(1f), "seen from inside");
         }
 
         [Test]

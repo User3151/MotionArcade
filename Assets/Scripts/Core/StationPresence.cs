@@ -1,60 +1,101 @@
 using System;
 using MotionArcade.Feedback;
+using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MotionArcade.Core
 {
-    // כל המשחקים עומדים בארקייד כל הזמן. משחק "נפתח" רק כשהשחקן עומד על העיגול שלו (השורש של המשחק):
-    // אז מופיע לוח ה-START והמוזיקה שלו מתחילה. משחק שאף אחד לא עומד מולו נשאר שקט ומציג רק שלט "עמוד על העיגול".
-    // יוצאים מהעיגול באמצע סבב: הסבב נעצר כמו ב-STOP (לא נרשם), כי אי אפשר לשחק ממקום אחר.
-    // המרחק נמדד מהראש (המצלמה) על הרצפה, עם שוליים ביציאה, כדי שהטיה קטנה של הגוף לא תסגור את המשחק.
+    // הכניסה למשחק ויציאה ממנו (גיא: "מסך עם PLAY, מסך שחור לשנייה, ואתה במשחק; EXIT מחזיר אותך למקום שעמדת").
+    // מול כל משחק עומד קיוסק עם PLAY, ליד העיגול שאליו מתלפטרים. PLAY: מחשיכים, השחקן עובר לעמדת המשחק
+    // (השורש של המשחק, מול המכונה), מופיע לוח ה-START והמוזיקה מתחילה. EXIT: אם יש סבב הוא נעצר בלי להירשם,
+    // מחשיכים, והשחקן חוזר בדיוק למקום ולכיוון שבהם עמד כשלחץ PLAY.
+    // בזמן משחק ההליכה, הסיבוב והטלפורט נעולים (LocomotionLock): יוצאים רק ב-EXIT, ולא בטעות.
+    // משחק אחד בכל פעם: Current.
     public class StationPresence : MonoBehaviour
     {
         [SerializeField] private GameStation station;
-        [SerializeField] private float enterRadius = 0.45f;
-        [SerializeField] private float exitRadius = 0.8f;
-        [SerializeField] private GameObject[] showWhenPresent;   // לוח START / STOP
-        [SerializeField] private GameObject[] showWhenAway;      // שלט "עמוד על העיגול"
+        [SerializeField] private GameObject playScreen;          // הקיוסק עם PLAY
+        [SerializeField] private Button playButton;
+        [SerializeField] private GameObject[] showWhenPresent;   // לוח START / STOP / EXIT
+        [SerializeField] private Button exitButton;
         [SerializeField] private GameMusic music;                // אופציונלי
 
-        private Transform head;
+        private Vector3 returnPosition;
+        private Quaternion returnRotation;
 
-        public bool Occupied { get; private set; }
+        public static StationPresence Current { get; private set; }
+        public bool Occupied { get; private set; }               // השחקן בתוך המשחק הזה
         public GameStation Station => station;
         public event Action<bool> OccupiedChanged;
 
-        private void Start() => Apply(false, force: true);
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => Current = null;
 
-        private void Update()
+        private void OnEnable()
         {
-            if (head == null)
+            if (playButton != null) playButton.onClick.AddListener(Play);
+            if (exitButton != null) exitButton.onClick.AddListener(Exit);
+        }
+
+        private void OnDisable()
+        {
+            if (playButton != null) playButton.onClick.RemoveListener(Play);
+            if (exitButton != null) exitButton.onClick.RemoveListener(Exit);
+        }
+
+        private void OnDestroy()
+        {
+            if (Current == this) Current = null;
+        }
+
+        private void Start() => Apply(false);
+
+        public void Play()
+        {
+            if (Occupied || Current != null) return;
+            XROrigin origin = FindFirstObjectByType<XROrigin>();
+            if (origin == null) return;
+            Action enter = () =>
             {
-                Camera main = Camera.main;
-                if (main == null) return;
-                head = main.transform;
-            }
-            Vector3 local = transform.InverseTransformPoint(head.position);
-            float distance = new Vector2(local.x, local.z).magnitude;
-            bool occupied = Occupied ? distance <= exitRadius : distance <= enterRadius;
-            if (occupied != Occupied) Apply(occupied, force: false);
+                returnPosition = origin.transform.position;
+                returnRotation = origin.transform.rotation;
+                // הראש מעל עמדת המשחק, מבט אל המכונה (+Z של המשחק)
+                origin.MatchOriginUpCameraForward(Vector3.up, transform.forward);
+                Vector3 head = origin.Camera.transform.position;
+                origin.MoveCameraToWorldLocation(new Vector3(transform.position.x, head.y, transform.position.z));
+                Physics.SyncTransforms();
+                Apply(true);
+            };
+            if (ScreenFader.Instance == null || !ScreenFader.Instance.Transition(enter)) enter();
         }
 
-        private void Apply(bool occupied, bool force)
+        public void Exit()
         {
-            if (!force && occupied == Occupied) return;
-            Occupied = occupied;
-            if (!occupied && station != null && station.IsRunning) station.AbortRound();
-            foreach (GameObject go in showWhenPresent) if (go != null) go.SetActive(occupied);
-            foreach (GameObject go in showWhenAway) if (go != null) go.SetActive(!occupied);
-            if (music != null) music.SetAudible(occupied);
-            OccupiedChanged?.Invoke(occupied);
+            if (!Occupied) return;
+            if (station != null && station.IsRunning) station.AbortRound();
+            XROrigin origin = FindFirstObjectByType<XROrigin>();
+            Action leave = () =>
+            {
+                if (origin != null)
+                {
+                    origin.transform.SetPositionAndRotation(returnPosition, returnRotation);
+                    Physics.SyncTransforms();
+                }
+                Apply(false);
+            };
+            if (ScreenFader.Instance == null || !ScreenFader.Instance.Transition(leave)) leave();
         }
 
-        private void OnDrawGizmosSelected()
+        private void Apply(bool inside)
         {
-            Gizmos.color = Color.cyan;
-            Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.DrawWireSphere(Vector3.zero, enterRadius);
+            Occupied = inside;
+            if (inside) Current = this;
+            else if (Current == this) Current = null;
+            if (playScreen != null) playScreen.SetActive(!inside);
+            foreach (GameObject go in showWhenPresent) if (go != null) go.SetActive(inside);
+            if (music != null) music.SetAudible(inside);
+            OccupiedChanged?.Invoke(inside);
         }
     }
 }
