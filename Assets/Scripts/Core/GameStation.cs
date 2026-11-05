@@ -54,6 +54,10 @@ namespace MotionArcade.Core
         // הלוח קורא אותה פעם בשנייה, אז היא צריכה להחזיר מחרוזת קבועה ולא לבנות חדשה (בלי GC).
         public virtual string PlayingHint => null;
 
+        // משחק בלי שעון (הוקי: עד 7 גולים): הלוח מציג רק את הספירה לאחור, ובזמן משחק מסתיר את השעון.
+        // roundSeconds של משחק כזה הוא רק תקרה, שסבב לא יימשך לנצח.
+        public virtual bool HasTimer => true;
+
         // שורות נוספות למסך התוצאה (ב-Whack: פגיעות, החטאות, זמן תגובה). נבנה פעם אחת בסוף הסבב.
         public virtual string ResultDetails => null;
 

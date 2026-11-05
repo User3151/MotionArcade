@@ -151,7 +151,7 @@ namespace MotionArcade.Tests
             Assert.That(Find<LightProbeGroup>(), Is.Not.Null);
         }
 
-        public static readonly string[] Games = { "Game_Basketball", "Game_Darts", "Game_Whack", "Game_BuzzWire" };
+        public static readonly string[] Games = { "Game_Basketball", "Game_Darts", "Game_Whack", "Game_BuzzWire", "Game_AirHockey" };
         private const float RoomHalfX = 10f, RoomHalfZ = 8f;
 
         // כל משחק בפינה שלו: הנפח שלו (כולל הלוחות) ועוד מקום לעמוד מולו, בעולם

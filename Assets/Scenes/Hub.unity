@@ -2210,6 +2210,7 @@ MonoBehaviour:
   - Game_Darts
   - Game_Whack
   - Game_BuzzWire
+  - Game_AirHockey
 --- !u!114 &398087944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4113,68 +4114,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1001 &583790101
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1104873480}
-    m_Modifications:
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -4.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7754215325784763966, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-      propertyPath: m_Name
-      value: Air Hockey
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
---- !u!4 &583790102 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3091288665197321625, guid: a1d19fbaf84122344ba4ff64bd0762df, type: 3}
-  m_PrefabInstance: {fileID: 583790101}
-  m_PrefabAsset: {fileID: 0}
 --- !u!43 &586325252
 Mesh:
   m_ObjectHideFlags: 0
@@ -7874,7 +7813,6 @@ Transform:
   - {fileID: 398858316}
   - {fileID: 1601226039}
   - {fileID: 1168387033}
-  - {fileID: 583790102}
   m_Father: {fileID: 1236375464}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1109217888

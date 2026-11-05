@@ -53,7 +53,7 @@ namespace MotionArcade.UI
         // ב-Start ולא ב-OnEnable: השעון של GameStation נוצר ב-Awake שלה, שיכול לרוץ אחרי ה-OnEnable כאן
         private void Start()
         {
-            title.text = station.DisplayName;
+            if (title != null) title.text = station.DisplayName;
             HandlePhase(station.Phase);
             HandleScore(station.Score);
         }
@@ -62,6 +62,7 @@ namespace MotionArcade.UI
         {
             RoundPhase phase = station.Phase;
             if (phase != RoundPhase.Countdown && phase != RoundPhase.Playing) return;
+            if (phase == RoundPhase.Playing && !station.HasTimer) return;
 
             // מעגלים למעלה: "3" כל עוד נשארו יותר משתי שניות. מעדכנים רק כשהמספר משתנה.
             int seconds = Mathf.CeilToInt(station.TimeLeft);
@@ -79,7 +80,7 @@ namespace MotionArcade.UI
             bool running = phase == RoundPhase.Countdown || phase == RoundPhase.Playing;
             startButton.gameObject.SetActive(!running);
             if (stopButton != null) stopButton.gameObject.SetActive(running);
-            clock.gameObject.SetActive(running);
+            clock.gameObject.SetActive(phase == RoundPhase.Countdown || (running && station.HasTimer));
 
             switch (phase)
             {
@@ -115,7 +116,10 @@ namespace MotionArcade.UI
             if (displayHint != null) displayHint.text = hint ?? "";
         }
 
-        private void HandleScore(int value) => score.SetText("{0}", value);
+        private void HandleScore(int value)
+        {
+            if (score != null) score.SetText("{0}", value);   // ריק במשחק שמציג ניקוד משלו (הוקי)
+        }
 
         private void Play(AudioClip clip)
         {
