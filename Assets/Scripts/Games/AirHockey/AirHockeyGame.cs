@@ -12,7 +12,8 @@ namespace MotionArcade.Games.AirHockey
     // הוקי אוויר מול רובוט, עד 7 גולים. הפיזיקה (HockeyPhysics), הרובוט (HockeyAI) והחוקים (HockeyMatch)
     // הם קוד טהור במרחב של המשטח; כאן רק מחברים אותם לעולם: יד → מחבט, מצב → מיקומים, אירועים → צליל ורטט.
     // המחבט של השחקן: תופסים בידית (grip) והוא הולך אחרי היד על המשטח, בחצי של השחקן בלבד. XRI לא מזיז אותו
-    // (בלי track position): הוא נשאר צמוד למשטח גם כשהיד עולה, ולא עף כשמשחררים.
+    // (בלי track position): הוא נשאר צמוד למשטח גם כשהיד עולה. בתפיסה הוא מחליק אל מתחת למרכז היד (גיא: תפיסה
+    // בקצה נראתה לא טבעית), ומאז הוא נשאר באותה יד עד סוף הסבב, גם אם הכפתור השתחרר קצת (הוא "ברח" לגיא באמצע).
     // מחוץ לסבב המחבט מחכה בגומה הימנית הקרובה, וה-START מעביר אותו לשולחן.
     public class AirHockeyGame : GameStation
     {
@@ -35,6 +36,7 @@ namespace MotionArcade.Games.AirHockey
         [SerializeField] private TMP_Text rule;
         [SerializeField] private Button difficultyButton;
         [SerializeField] private TMP_Text difficultyLabel;
+        [SerializeField] private TMP_Text difficultyInfo;   // שורה שמסבירה את הרמה
 
         [Header("Sound")]
         [SerializeField] private AudioSource puckAudio;    // על הפאק: מכות ודפנות
@@ -45,7 +47,13 @@ namespace MotionArcade.Games.AirHockey
         [SerializeField] private AudioClip goalAgainst;
 
         private const string DifficultyKey = "airhockey.difficulty";
-        private static readonly string[] LevelNames = { "EASY", "NORMAL", "HARD" };
+        private static readonly string[] LevelNames = { "<  EASY  >", "<  NORMAL  >", "<  HARD  >" };
+        private static readonly string[] LevelInfo =
+        {
+            "A slow robot that reacts late.\nGood for learning the game.",
+            "A fair match. The robot defends\nand attacks at a medium pace.",
+            "A fast robot that also banks shots\noff the walls. Aim for the corners.",
+        };
         private static readonly string[] RuleTexts = { "FIRST TO 7  •  EASY", "FIRST TO 7  •  NORMAL", "FIRST TO 7  •  HARD" };
 
         private readonly HockeyRink rink = HockeyRink.Standard;
@@ -54,8 +62,12 @@ namespace MotionArcade.Games.AirHockey
         private Vector2 puckPosition, puckVelocity, playerPosition, opponentPosition;
         private bool puckInPlay;
         private float serveTimer;
-        private IXRInteractor holder;
-        private Vector2 grabOffset;
+        private IXRInteractor holder;     // היד שהמחבט הולך אחריה (נשארת גם אחרי שחרור, עד סוף הסבב)
+        private Vector2 grabOffset;       // נעלם תוך centerSeconds: המחבט מחליק אל מרכז היד בלי לקפוץ
+        private const float CenterSeconds = 0.15f;
+        private const float PlayerServeY = -0.62f;     // גיא: הפאק היה רחוק מדי, היה צריך להתכופף קדימה
+        private const float OpponentServeY = 0.55f;
+        private const float PlayerStartY = -0.84f;
         private float puckY, malletY, playerY;   // גובה מעל המשטח; המחבט של השחקן בגומה גבוה מעט יותר
         private string resultDetails;
 
@@ -115,6 +127,7 @@ namespace MotionArcade.Games.AirHockey
             if (opponentScore != null) opponentScore.SetText("{0}", match.Opponent);
             if (rule != null) rule.text = RuleTexts[(int)difficulty];
             if (difficultyLabel != null) difficultyLabel.text = LevelNames[(int)difficulty];
+            if (difficultyInfo != null) difficultyInfo.text = IsRunning ? "Level can be changed between rounds." : LevelInfo[(int)difficulty];
             if (difficultyButton != null) difficultyButton.interactable = !IsRunning;
         }
 
@@ -125,7 +138,10 @@ namespace MotionArcade.Games.AirHockey
             Haptics.Pulse(holder, Haptics.Light, 0.04f);
         }
 
-        private void HandleRelease(SelectExitEventArgs args) => holder = null;
+        // שחרור לא משחרר: המחבט ממשיך עם היד עד סוף הסבב. יד אחרת שתופסת אותו לוקחת אותו
+        private void HandleRelease(SelectExitEventArgs args) { }
+
+        public bool Holding => holder != null;
 
         // מחוץ לסבב: המחבט בגומה, הפאק במרכז, היריב בבית
         private void ToRest()
@@ -150,16 +166,19 @@ namespace MotionArcade.Games.AirHockey
                 ai.SetLevel(difficulty);
                 ai.Reset();
                 resultDetails = null;
-                playerPosition = new Vector2(0f, -rink.HalfLength + 0.25f);
+                playerPosition = new Vector2(0f, PlayerStartY);
+                holder = null;
                 playerY = malletY;
                 playerMallet.position = ToWorld(playerPosition, malletY);
                 Serve(toPlayer: true);
             }
             else if (phase == RoundPhase.Intro)
             {
+                holder = null;
                 match.Reset();
                 ToRest();
             }
+            else if (phase == RoundPhase.Results) holder = null;
             ShowDisplay();
         }
 
@@ -176,7 +195,7 @@ namespace MotionArcade.Games.AirHockey
 
         private void Serve(bool toPlayer)
         {
-            puckPosition = new Vector2(0f, toPlayer ? -0.45f : 0.45f);
+            puckPosition = new Vector2(0f, toPlayer ? PlayerServeY : OpponentServeY);
             puckVelocity = Vector2.zero;
             puckInPlay = true;
             puck.gameObject.SetActive(true);
@@ -192,6 +211,7 @@ namespace MotionArcade.Games.AirHockey
             Vector2 playerFrom = playerPosition;
             if (holder != null)
             {
+                grabOffset = Vector2.MoveTowards(grabOffset, Vector2.zero, grabOffset.magnitude * dt / CenterSeconds + 0.02f * dt);
                 Vector2 hand = ToTable(holder.GetAttachTransform(playerGrab).position) + grabOffset;
                 float r = rink.MalletRadius;
                 playerPosition = new Vector2(

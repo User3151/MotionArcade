@@ -87,6 +87,19 @@ namespace MotionArcade.Core
             if (ScreenFader.Instance == null || !ScreenFader.Instance.Transition(leave)) leave();
         }
 
+        // MAIN MENU מתפריט העצירה: יוצאים בלי מעבר משלו (התפריט כבר מחשיך ומזיז את השחקן לנקודת ההתחלה)
+        public void LeaveNow()
+        {
+            if (!Occupied) return;
+            if (station != null && station.IsRunning) station.AbortRound();
+            Apply(false);
+        }
+
+        public static void LeaveCurrentNow()
+        {
+            if (Current != null) Current.LeaveNow();
+        }
+
         private void Apply(bool inside)
         {
             Occupied = inside;

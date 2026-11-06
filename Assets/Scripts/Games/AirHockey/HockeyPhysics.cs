@@ -19,8 +19,9 @@ namespace MotionArcade.Games.AirHockey
         {
             HalfWidth = 0.525f, HalfLength = 1.0f, GoalHalfWidth = 0.15f,
             PuckRadius = 0.04f, MalletRadius = 0.05f,
-            WallRestitution = 0.88f, MalletRestitution = 0.75f,
-            Friction = 0.12f, MaxSpeed = 7f,
+            // גיא: הפאק מהיר מדי. 4.5 מ'/ש' עדיין מכה חזקה בשולחן של 2 מ'
+            WallRestitution = 0.82f, MalletRestitution = 0.6f,
+            Friction = 0.2f, MaxSpeed = 4.5f,
         };
     }
 
@@ -76,7 +77,13 @@ namespace MotionArcade.Games.AirHockey
             Vector2 relative = velocity - malletVelocity;
             float approach = Vector2.Dot(relative, normal);
             if (approach >= 0f) return;   // כבר מתרחקים
+            float before = velocity.magnitude;
             velocity -= (1f + rink.MalletRestitution) * approach * normal;
+            // תקרה למה שמכה אחת מוסיפה: פאק שנלכד בין המחבט לדופן קפץ ביניהם ונהיה מהיר יותר ויותר (גיא).
+            // מכה אמיתית מעבירה בערך את מהירות המחבט; קפיצה בין מחבט כמעט עומד לדופן מאבדת אנרגיה
+            float limit = Mathf.Max(before * 0.9f, malletVelocity.magnitude * 1.7f + 0.4f);
+            float after = velocity.magnitude;
+            if (after > limit) velocity *= limit / after;
             if (-approach > result.HitSpeed) { result.HitSpeed = -approach; result.MalletHit = index; }
         }
 
@@ -127,6 +134,20 @@ namespace MotionArcade.Games.AirHockey
             result.WallHit = true;
             result.WallSpeed = Mathf.Max(result.WallSpeed, Mathf.Abs(component));
             component = -component * rink.WallRestitution;
+        }
+
+        // איפה הפאק יהיה בעוד t שניות, עם קפיצות מכל הדפנות (בלי שערים ובלי חיכוך): לניחוש של הרובוט
+        public static Vector2 PredictPosition(Vector2 position, Vector2 velocity, float t, in HockeyRink rink)
+        {
+            Vector2 raw = position + velocity * Mathf.Max(0f, t);
+            return new Vector2(Fold(raw.x, rink.HalfWidth - rink.PuckRadius), Fold(raw.y, rink.HalfLength - rink.PuckRadius));
+        }
+
+        private static float Fold(float x, float max)
+        {
+            float span = 2f * max;
+            float u = Mathf.Repeat(x + max, 2f * span);
+            return (u <= span ? u : 2f * span - u) - max;
         }
 
         // איפה הפאק יחצה את הקו y (עם קפיצות מהדפנות). למטה: לאן היריב צריך להגיע כדי לחסום.

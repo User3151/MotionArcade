@@ -20,6 +20,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private Bounds holder;       // חץ שנח כאן זמין לשחקן
         [SerializeField] private Bounds playArea;     // חץ מחוץ לזה הלך לאיבוד
         [SerializeField] private float returnAllDelay = 1f;
+        [SerializeField] private float returnOneDelay = 0.8f;   // חץ שננעץ חוזר למחזיק אחרי רגע (רואים איפה פגע)
         [SerializeField] private float lostSeconds = 1.5f;
 
         [Header("Board")]
@@ -44,6 +45,7 @@ namespace MotionArcade.Games.Darts
         private readonly AroundTheClock progress = new AroundTheClock();
         private string[] hints;          // "Hit the 7" לכל מטרה, מחושב פעם אחת (בלי GC באמצע סבב)
         private float[] lostTimers;
+        private float[] stuckTimers;
         private float returnAllTimer;
 
         public DartBoard Board => board;
@@ -68,6 +70,7 @@ namespace MotionArcade.Games.Darts
             for (int i = 1; i <= 20; i++) hints[i] = "Hit the " + i;
             hints[AroundTheClock.Bull] = "Hit the BULL";
             lostTimers = new float[darts.Length];
+            stuckTimers = new float[darts.Length];
             foreach (Dart dart in darts) dart.Init(this);
             // Unity null (שדה ריק) הוא לא null אמיתי לממשק: מעבירים null מפורש
             IThrowAssist aim = assist != null ? assist : null;
@@ -176,10 +179,18 @@ namespace MotionArcade.Games.Darts
                     case Dart.State.Flying:
                         anyInPlay = true;
                         lostTimers[i] = 0f;
+                        stuckTimers[i] = 0f;
                         break;
                     case Dart.State.Stuck:
                         stuck++;
                         lostTimers[i] = 0f;
+                        // גיא: לא לחכות שכל השלושה ייזרקו. כל חץ חוזר לבד, כך שתמיד יש חץ במחזיק.
+                        // בסוף סבב (Results) החצים נשארים בלוח, לראות איפה פגעו.
+                        if (Phase == RoundPhase.Playing || Phase == RoundPhase.Countdown)
+                        {
+                            stuckTimers[i] += Time.deltaTime;
+                            if (stuckTimers[i] > returnOneDelay) { ReturnOne(dart); stuckTimers[i] = 0f; }
+                        }
                         break;
                     default:
                         Vector3 local = transform.InverseTransformPoint(dart.Position);
@@ -201,8 +212,8 @@ namespace MotionArcade.Games.Darts
                 }
             }
 
-            // כל החצים נזרקו ונתקעו: מחזירים את כולם אחרי רגע, כדי שהשחקן יספיק לראות איפה פגע
-            if (!anyInPlay && inHolder == 0 && stuck > 0)
+            // גיבוי מחוץ לסבב: כל החצים נזרקו ונתקעו
+            if (Phase != RoundPhase.Playing && Phase != RoundPhase.Results && !anyInPlay && inHolder == 0 && stuck > 0)
             {
                 returnAllTimer += Time.deltaTime;
                 if (returnAllTimer > returnAllDelay) ReturnAll();

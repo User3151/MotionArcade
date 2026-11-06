@@ -70,10 +70,44 @@ namespace MotionArcade.Tests
                 .Select(s => System.IO.Path.GetFileNameWithoutExtension(s.path)).ToArray();
             Assert.That(loader.Games, Is.EquivalentTo(Games));
             foreach (string game in loader.Games) Assert.That(inBuild, Does.Contain(game), game + " is not in Build Settings");
-            var menu = Find<HubMenu>();
+        }
+
+        [Test]
+        public void TheArcade_StartsWithAWelcomeScreen_AndPausesFromTheController()
+        {
+            // גיא: מסך פתיחה (Welcome to Motion Arcade) עם GET IN, SETTINGS, EXIT, והסבר על העיגולים הכחולים;
+            // ובכל רגע, גם באמצע משחק, כפתור בבקר פותח תפריט: להמשיך, עוצמות, לצאת מהמשחק, לתפריט הראשי
+            var menu = Find<ArcadeMenu>();
             Assert.That(menu, Is.Not.Null);
-            Assert.That(menu.GetComponentsInChildren<UnityEngine.UI.Button>(true).Select(x => x.name),
-                Is.EquivalentTo(new[] { "Settings Button", "Exit Button", "Back Button" }), "settings and exit only");
+            var so = new SerializedObject(menu);
+            foreach (string field in new[] { "titlePage", "pausePage", "settingsPage", "getInButton", "titleSettingsButton", "titleExitButton",
+                "resumeButton", "pauseSettingsButton", "leaveGameButton", "mainMenuButton", "pauseWhere", "settingsBackButton", "startSpot" })
+                Assert.That(so.FindProperty(field).objectReferenceValue, Is.Not.Null, field);
+            Assert.That(so.FindProperty("showTitleOnStart").boolValue, Is.True);
+            var title = (GameObject)so.FindProperty("titlePage").objectReferenceValue;
+            string text = string.Join(" ", title.GetComponentsInChildren<TMPro.TMP_Text>(true).Select(t => t.text));
+            Assert.That(text, Does.Contain("MOTION ARCADE"));
+            Assert.That(text, Does.Contain("blue circle"), "explains where the games are played");
+            Assert.That(text, Does.Contain("MENU"), "tells how to pause");
+            var bindings = so.FindProperty("menuBindings");
+            var paths = Enumerable.Range(0, bindings.arraySize).Select(i => bindings.GetArrayElementAtIndex(i).stringValue).ToArray();
+            Assert.That(paths, Has.Some.Contains("{LeftHand}/menuButton"));
+            Assert.That(paths, Has.Some.Contains("secondaryButton"), "Triangle, like in The Lab");
+            Assert.That(menu.GetComponentsInChildren<VolumeSliders>(true), Has.Length.EqualTo(1), "one settings page for both");
+            Assert.That(menu.GetComponentsInChildren<RaySlider>(true), Has.Length.EqualTo(3));
+        }
+
+        [Test]
+        public void TheRightStick_TurnsSmoothly()
+        {
+            // גיא: לא סיבוב בקפיצות, תנועה חלקה
+            var rig = hub.GetRootGameObjects().First(g => g.name.StartsWith("XR Origin")).transform;
+            // ControllerInputActionManager בא מהדוגמה של XRI (assembly משלה): קוראים את השדה בשם
+            var right = rig.GetComponentsInChildren<MonoBehaviour>(true)
+                .First(m => m.GetType().Name == "ControllerInputActionManager" && m.name.Contains("Right"));
+            Assert.That(new SerializedObject(right).FindProperty("m_SmoothTurnEnabled").boolValue, Is.True);
+            var turn = rig.GetComponentInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning.ContinuousTurnProvider>(true);
+            Assert.That(turn.turnSpeed, Is.InRange(60f, 120f), "degrees a second");
         }
 
         [Test]
@@ -221,8 +255,10 @@ namespace MotionArcade.Tests
                     Assert.That(Mathf.Max(-b.min.x, b.max.x), Is.LessThanOrEqualTo(RoomHalfX), Games[i] + " is in a wall");
                     Assert.That(Mathf.Max(-b.min.z, b.max.z), Is.LessThanOrEqualTo(RoomHalfZ), Games[i] + " is in a wall");
                     for (int j = i + 1; j < areas.Length; j++) Assert.That(b.Intersects(areas[j]), Is.False, Games[i] + " and " + Games[j]);
-                    // השחקן מתחיל במרכז: אף משחק לא עליו
-                    Assert.That(b.Contains(new Vector3(0f, 1f, 0f)), Is.False, Games[i]);
+                    // השחקן מתחיל בנקודת ההתחלה (בדרום, מול מסך הפתיחה): אף משחק לא עליה
+                    Vector3 start = hub.GetRootGameObjects().First(g => g.name == "Arcade Room").transform.Find("Start Spot").position;
+                    Assert.That(b.Contains(start + Vector3.up), Is.False, Games[i]);
+                    Assert.That(b.Contains(start + Vector3.up + Vector3.forward * 1.5f), Is.False, Games[i] + " stands where the welcome screen is");
                 }
             });
         }

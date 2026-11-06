@@ -119,10 +119,10 @@ namespace MotionArcade.Tests
             Assert.That(ring.lossyScale.x, Is.EqualTo(1f).Within(1e-4f), "the radius is in metres");
             Assert.That(Vector3.Angle(ring.up, Vector3.up), Is.LessThan(0.5f));
             // טבעת עגולה (טורוס) ולא 16 מקטעים ישרים: הכדור פוגע בה כמו בטבעת אמיתית
-            var rim = ring.Find("Rim").GetComponent<MeshCollider>();
+            var rim = ring.Find("Rim Pivot/Rim").GetComponent<MeshCollider>();
             Assert.That(rim, Is.Not.Null);
             Assert.That(rim.convex, Is.False, "a ring, not its convex hull");
-            Assert.That(ring.Find("Rim").childCount, Is.EqualTo(0), "the old capsule segments are gone");
+            Assert.That(ring.Find("Rim Pivot/Rim").childCount, Is.EqualTo(0), "the old capsule segments are gone");
             float radius = Game.FindProperty("ringRadius").floatValue;
             float min = float.MaxValue, max = 0f, top = float.MinValue;
             foreach (Vector3 v in rim.sharedMesh.vertices)
@@ -143,9 +143,9 @@ namespace MotionArcade.Tests
         public void TheNetIsLive_AndKnowsEveryBall()
         {
             var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
-            var net = ring.Find("Net").GetComponent<HoopNet>();
+            var net = ring.Find("Rim Pivot/Net").GetComponent<HoopNet>();
             Assert.That(net, Is.Not.Null, "a simulated net, not a drawn one");
-            Assert.That(net.transform.localPosition, Is.EqualTo(Vector3.zero), "hangs from the ring plane");
+            Assert.That(Vector3.Distance(net.transform.position, ring.position), Is.LessThan(0.001f), "hangs from the ring plane");
             var balls = new SerializedObject(net).FindProperty("balls");
             var gameBalls = Game.FindProperty("balls");
             Assert.That(balls.arraySize, Is.EqualTo(gameBalls.arraySize));
@@ -170,7 +170,34 @@ namespace MotionArcade.Tests
             Mesh mesh = ball.GetComponent<MeshFilter>().sharedMesh;
             Assert.That(AssetDatabase.GetAssetPath(mesh), Is.EqualTo("Assets/Meshes/Basketball.asset"));
             Assert.That(mesh.bounds.size.x, Is.EqualTo(ball.GetComponent<SphereCollider>().radius * 2f).Within(0.005f), "what you see is what bounces");
-            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_BaseMap")), Does.StartWith("Assets/ThirdParty/BallArman/"));
+            // הטקסטורה של Arman, עם הרקע הלבן ממולא בצבע הכדור: גיא ראה פס לבן בתפר בזוויות מסוימות (המיפמאפים
+            // ערבבו את הלבן שסביב שני חצאי הכדור)
+            var tex = (Texture2D)material.GetTexture("_BaseMap");
+            Assert.That(AssetDatabase.GetAssetPath(tex), Is.EqualTo("Assets/Textures/Basketball_BaseColor_Filled.png"));
+            var pixels = new Texture2D(2, 2);
+            pixels.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(tex)));
+            int white = 0, total = 0;
+            for (int y = 0; y < pixels.height; y += 16) for (int x = 0; x < pixels.width; x += 16)
+            {
+                Color c = pixels.GetPixel(x, y); total++;
+                if (Mathf.Min(c.r, Mathf.Min(c.g, c.b)) > 0.6f) white++;
+            }
+            Object.DestroyImmediate(pixels);
+            Assert.That(white, Is.EqualTo(0), $"{white} of {total} samples are white");
+        }
+
+        [Test]
+        public void TheRim_GivesUnderTheBall_AndSpringsBack()
+        {
+            // גיא: הסל צריך לקפוץ למעלה ולמטה, להגיב למשקל של הכדור שפוגע בו
+            var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
+            Transform pivot = ring.Find("Rim Pivot");
+            Assert.That(pivot, Is.Not.Null);
+            Assert.That(pivot.InverseTransformPoint(ring.position).z, Is.LessThan(-0.2f), "the hinge is at the back of the rim, by the board");
+            var spring = pivot.Find("Rim").GetComponent<RimSpring>();
+            Assert.That(spring, Is.Not.Null);
+            Assert.That(new SerializedObject(spring).FindProperty("pivot").objectReferenceValue, Is.SameAs(pivot));
+            Assert.That(pivot.Find("Net"), Is.Not.Null, "the net hangs on the rim and dips with it");
         }
 
         [Test]
@@ -178,7 +205,7 @@ namespace MotionArcade.Tests
         {
             // כמו ב-Just Hoops: צלצול טבעת, חבטה בלוח, רשת, ותשואות קהל על סל
             var ring = (Transform)Game.FindProperty("ring").objectReferenceValue;
-            var rim = ring.Find("Rim").GetComponent<SurfaceSound>();
+            var rim = ring.Find("Rim Pivot/Rim").GetComponent<SurfaceSound>();
             Assert.That(rim, Is.Not.Null);
             Assert.That(rim.Kind, Is.EqualTo(SurfaceSound.Part.Rim));
             Assert.That(rim.Pick(), Is.Not.Null);
@@ -187,7 +214,7 @@ namespace MotionArcade.Tests
             Assert.That(board.Kind, Is.EqualTo(SurfaceSound.Part.Backboard));
             Assert.That(board.Pick(), Is.Not.Null);
             // הקוליידר של הטבעת מוצא את הצליל שלה (ImpactSound מחפש בהורים)
-            Assert.That(ring.Find("Rim").GetComponent<Collider>().GetComponentInParent<SurfaceSound>(), Is.SameAs(rim));
+            Assert.That(ring.Find("Rim Pivot/Rim").GetComponent<Collider>().GetComponentInParent<SurfaceSound>(), Is.SameAs(rim));
 
             Assert.That(Game.FindProperty("swishClip").objectReferenceValue, Is.Not.Null);
             var crowd = (AudioSource)Game.FindProperty("crowd").objectReferenceValue;

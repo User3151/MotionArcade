@@ -1,11 +1,11 @@
 # Credits
 
 ## Music
-- Game music in `Assets/Audio/Music` (`basketball_*`, `whack_*`, `buzzwire_*`, `darts_*`, `airhockey_*`) was generated with
+- Game music in `Assets/Audio/Music` (`basketball_*`, `whack_*`, `buzzwire_*`, `darts_*`, `airhockey_*`, `arcade_*`) was generated with
   [ElevenLabs Music](https://elevenlabs.io/music).
 
 ## Sound effects
-- `Assets/Audio/SFX/Basketball` and `Assets/Audio/SFX/AirHockey` were generated with
+- `Assets/Audio/SFX/Basketball`, `Assets/Audio/SFX/AirHockey` and `Assets/Audio/SFX/Arcade` were generated with
   [ElevenLabs Sound Effects](https://elevenlabs.io/sound-effects).
 - The other sounds in `Assets/Audio/SFX` and `Assets/Audio/Music/clock_tick.wav` are synthesized from simple
   waveforms for this project (no third-party material).
@@ -13,6 +13,10 @@
 ## Air hockey table
 - The table, mallets and puck are built in code for this project (`Assets/Editor/AirHockeyBuilder.cs`), styled
   after real arcade air hockey tables; no third-party models or textures.
+
+## Attract screens
+- The demo screens on the arcade cabinets (`Assets/Textures/Arcade/Attract`) are original pixel art drawn in code
+  for this project (Star Raider, Neon Snake, Brick Blast, Road Rush); no third-party games or characters.
 
 ## Models
 - The controller hands (`Assets/Prefabs/Hands`) use the hand meshes from the Unity XR Hands package sample

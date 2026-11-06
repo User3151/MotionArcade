@@ -93,7 +93,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000004, guid: 78c280ea6618b354d9f65f24ad13fbed, type: 2}
+  m_LightingDataAsset: {fileID: 112000006, guid: 78c280ea6618b354d9f65f24ad13fbed, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -386,6 +386,7 @@ MonoBehaviour:
   runningPose: {fileID: 594461962}
   runningScale: 0.55
   moveSeconds: 0.35
+  faceHead: 1
 --- !u!1 &183588830
 GameObject:
   m_ObjectHideFlags: 0
@@ -2962,9 +2963,8 @@ Transform:
   - {fileID: 1946873217}
   - {fileID: 1177993698}
   - {fileID: 1405586339}
-  - {fileID: 1420343009}
-  - {fileID: 1754327273}
   - {fileID: 324113789}
+  - {fileID: 2035805274}
   m_Father: {fileID: 1433841196}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &505673390
@@ -6458,6 +6458,7 @@ GameObject:
   - component: {fileID: 1420343013}
   - component: {fileID: 1420343012}
   - component: {fileID: 1420343011}
+  - component: {fileID: 1420343014}
   m_Layer: 0
   m_Name: Rim
   m_TagString: Untagged
@@ -6473,12 +6474,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1420343008}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.229}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 505673389}
+  m_Father: {fileID: 2035805274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1420343010
 MonoBehaviour:
@@ -6576,6 +6577,23 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1420343008}
   m_Mesh: {fileID: 4300000, guid: 64459b62550e8394baffdc3f6abb9623, type: 2}
+--- !u!114 &1420343014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420343008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d202916a54170b047b705c30b6ba7408, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Games.Basketball.RimSpring
+  pivot: {fileID: 2035805274}
+  frequency: 6
+  dampingRatio: 0.22
+  degreesPerImpulse: 55
+  maxDegrees: 7
 --- !u!1 &1432313257
 GameObject:
   m_ObjectHideFlags: 0
@@ -6783,7 +6801,7 @@ Transform:
   m_GameObject: {fileID: 1433841194}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.5, y: 0, z: 3.6}
+  m_LocalPosition: {x: -3, y: 0, z: 3.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7711,12 +7729,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1754327272}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.229}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 505673389}
+  m_Father: {fileID: 2035805274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1754327274
 MeshRenderer:
@@ -9129,6 +9147,39 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2017245276}
   m_CullTransparentMesh: 1
+--- !u!1 &2035805273
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2035805274}
+  m_Layer: 0
+  m_Name: Rim Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2035805274
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2035805273}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.229}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1420343009}
+  - {fileID: 1754327273}
+  m_Father: {fileID: 505673389}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2058921640
 GameObject:
   m_ObjectHideFlags: 0

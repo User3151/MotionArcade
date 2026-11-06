@@ -23,7 +23,7 @@ namespace MotionArcade.Tests
             var r = Step(ref p, ref v, 0.2f);
             Assert.That(r.WallHit, Is.True);
             Assert.That(v.x, Is.LessThan(0f));
-            Assert.That(-v.x, Is.InRange(1.6f, 1.8f), "about 88% of the speed");
+            Assert.That(-v.x, Is.InRange(1.5f, 1.7f), "about 82% of the speed");
             Assert.That(p.x, Is.LessThanOrEqualTo(Rink.HalfWidth - Rink.PuckRadius + 1e-4f));
         }
 
@@ -75,6 +75,35 @@ namespace MotionArcade.Tests
             var from = new Vector2(0f, -0.6f); var to = from + new Vector2(0f, 10f * dt);
             Step(ref p, ref v, dt, from, to);
             Assert.That(v.magnitude, Is.LessThanOrEqualTo(Rink.MaxSpeed + 1e-3f));
+        }
+
+        [Test]
+        public void APuckTrappedBetweenTheMalletAndTheWall_SlowsDown()
+        {
+            // גיא: פאק מאחורי המחבט, ליד הקיר, קפץ הלוך ושוב ביניהם והגיע למהירויות מוגזמות
+            const float dt = 1f / 90f;
+            var p = new Vector2(0f, -0.93f); var v = new Vector2(0f, -3f);
+            var mallet = new Vector2(0f, -0.82f);
+            float max = 0f;
+            for (int i = 0; i < 180; i++)
+            {
+                var next = mallet + new Vector2(0f, -0.3f * dt);   // נלחץ לאט לכיוון הקיר
+                if (next.y < -Rink.HalfLength + Rink.MalletRadius) next.y = -Rink.HalfLength + Rink.MalletRadius;
+                var r = HockeyPhysics.Step(ref p, ref v, mallet, next, Away, Away, dt, Rink);
+                mallet = next;
+                if (r.Goal != GoalScored.None) break;
+                if (i > 20) max = Mathf.Max(max, v.magnitude);
+            }
+            Assert.That(max, Is.LessThan(3f), "it loses speed instead of gaining it");
+        }
+
+        [Test]
+        public void PredictPosition_BouncesOffEveryWall()
+        {
+            var p = HockeyPhysics.PredictPosition(new Vector2(0.4f, 0.9f), new Vector2(1f, 1f), 0.2f, Rink);
+            Assert.That(p.x, Is.LessThanOrEqualTo(Rink.HalfWidth - Rink.PuckRadius + 1e-4f));
+            Assert.That(p.y, Is.LessThanOrEqualTo(Rink.HalfLength - Rink.PuckRadius + 1e-4f));
+            Assert.That(p.x, Is.EqualTo(0.37f).Within(1e-3f), "0.6 folded at 0.485");
         }
 
         [Test]
@@ -179,6 +208,38 @@ namespace MotionArcade.Tests
                         var goal = Play(ai, new Vector2(x, y), Vector2.zero, 6f, out Vector2 lowest, out _);
                         Assert.That(goal != GoalScored.None || lowest.y < 0f, Is.True, $"{level}: stuck with the puck at ({x}, {y})");
                     }
+        }
+
+        [Test]
+        public void AttacksAPuckMovingSidewaysInItsHalf()
+        {
+            // גיא: כשהפאק זז מצד לצד בחצי שלו, הרובוט נשאר מאחור ועקב אחריו במקום לתקוף. בכל הרמות
+            foreach (HockeyDifficulty level in new[] { HockeyDifficulty.Easy, HockeyDifficulty.Normal, HockeyDifficulty.Hard })
+                foreach (float speed in new[] { 0.8f, 1.5f })
+                {
+                    var ai = new HockeyAI(level, seed: 5);
+                    var goal = Play(ai, new Vector2(-0.3f, 0.35f), new Vector2(speed, 0.05f), 5f, out Vector2 lowest, out bool left);
+                    Assert.That(goal == GoalScored.ByOpponent || lowest.y < 0f, Is.True, $"{level} at {speed} m/s: the puck was never sent back");
+                    Assert.That(left, Is.False, level + ": stays in its half");
+                }
+        }
+
+        [Test]
+        public void Hard_StillLetsSomeShotsIn()
+        {
+            // גיא: ב-Hard הוא חזה כל מכה ולא היה אפשר להבקיע בכלל
+            var ai = new HockeyAI(HockeyDifficulty.Hard, seed: 11);
+            var shots = new System.Random(9);
+            int goals = 0;
+            for (int i = 0; i < 30; i++)
+            {
+                var from = new Vector2((float)(shots.NextDouble() - 0.5) * 0.8f, -0.55f);
+                var aim = new Vector2((float)(shots.NextDouble() - 0.5) * 0.25f, 1f);
+                if (shots.NextDouble() < 0.4) aim.x = (aim.x >= 0f ? 1f : -1f) * 2f * (Rink.HalfWidth - Rink.PuckRadius) - aim.x;   // דרך הדופן
+                var velocity = (aim - from).normalized * (3.2f + (float)shots.NextDouble() * 1.3f);
+                if (Play(ai, from, velocity, 1.4f, out _, out _) == GoalScored.ByPlayer) goals++;
+            }
+            Assert.That(goals, Is.InRange(4, 18), $"hard let in {goals} of 30 good shots");
         }
 
         [Test]

@@ -23,13 +23,14 @@ namespace MotionArcade.Tests
         }
 
         [Test]
-        public void Quality_SingleLevelOnQuestBudget()
+        public void Quality_SingleLevel_HdrForTheNeonBloom()
         {
             Assert.That(QualitySettings.names.Length, Is.EqualTo(1), "one quality level for every platform");
             var urp = QualitySettings.GetRenderPipelineAssetAt(0) as UniversalRenderPipelineAsset;
             Assert.That(urp, Is.Not.Null, "the quality level must use a URP asset");
             Assert.That(GraphicsSettings.defaultRenderPipeline, Is.SameAs(urp));
-            Assert.That(urp.supportsHDR, Is.False, "HDR costs bandwidth on Quest");
+            // היעד הוא PSVR2 על PC (גיא, 2026-11-05), לא Quest: HDR דלוק כדי שה-Bloom יזהיר רק את הניאון והמסכים
+            Assert.That(urp.supportsHDR, Is.True, "the Bloom threshold needs colours above 1");
             Assert.That(urp.msaaSampleCount, Is.EqualTo(4));
             Assert.That(urp.renderScale, Is.EqualTo(1f));
             Assert.That(urp.useSRPBatcher, Is.True);
