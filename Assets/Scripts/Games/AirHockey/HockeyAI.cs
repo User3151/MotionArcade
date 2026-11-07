@@ -33,12 +33,12 @@ namespace MotionArcade.Games.AirHockey
                 switch (level)
                 {
                     case HockeyDifficulty.Easy:
-                        return new Settings { MaxSpeed = 1.0f, Accel = 3.5f, StrikeSpeed = 1.5f, StrikeAccel = 7f, Reaction = 0.3f, Error = 0.12f, DefenseDepth = 0.22f, BankChance = 0f, Hesitation = 0.45f };
+                        return new Settings { MaxSpeed = 1.35f, Accel = 6.5f, StrikeSpeed = 2.2f, StrikeAccel = 13f, Reaction = 0.25f, Error = 0.11f, DefenseDepth = 0.22f, BankChance = 0.05f, Hesitation = 0.2f };
                     case HockeyDifficulty.Hard:
                         // גיא: ב-Hard הוא קרא כל מכה ולא היה סיכוי להבקיע, ואחר כך: מהיר מדי ולא טבעי
-                        return new Settings { MaxSpeed = 1.9f, Accel = 9f, StrikeSpeed = 2.7f, StrikeAccel = 12f, Reaction = 0.1f, Error = 0.03f, DefenseDepth = 0.28f, BankChance = 0.3f, Hesitation = 0.18f };
+                        return new Settings { MaxSpeed = 2.8f, Accel = 16f, StrikeSpeed = 3.9f, StrikeAccel = 28f, Reaction = 0.09f, Error = 0.04f, DefenseDepth = 0.28f, BankChance = 0.35f, Hesitation = 0.04f };
                     default:
-                        return new Settings { MaxSpeed = 1.25f, Accel = 4.5f, StrikeSpeed = 2f, StrikeAccel = 9f, Reaction = 0.18f, Error = 0.07f, DefenseDepth = 0.25f, BankChance = 0.15f, Hesitation = 0.3f };
+                        return new Settings { MaxSpeed = 2.0f, Accel = 10.5f, StrikeSpeed = 3.0f, StrikeAccel = 20f, Reaction = 0.14f, Error = 0.06f, DefenseDepth = 0.25f, BankChance = 0.2f, Hesitation = 0.1f };
                 }
             }
         }
@@ -63,6 +63,7 @@ namespace MotionArcade.Games.AirHockey
         private Vector2 velocity;     // של המחבט שלו
         private Vector2 smoothTarget;
         private bool hasTarget;
+        private bool approach;        // בצעד הזה הוא בדרך אל מאחורי הפאק: בלי בלימה
         private float sign = 1f;     // כיוון התנועה האחרון של הפאק לאורך, כדי לבחור טעות חדשה בכל התקפה שלך
 
         public Mode Current { get; private set; }
@@ -86,6 +87,7 @@ namespace MotionArcade.Games.AirHockey
             striking = false;
             velocity = Vector2.zero;
             hasTarget = false;
+            sign = -1f;   // גם המכה הראשונה אחרי הגשה מקבלת טעות ניחוש (קודם רק אחרי שהפאק היה אצלך)
             Current = Mode.Home;
         }
 
@@ -165,15 +167,16 @@ namespace MotionArcade.Games.AirHockey
                     }
                     // מכה רק כשהוא באמת מאחורי הפאק ביחס לכיוון המכה; אחרת המכה יוצאת לצד (או לשער שלו)
                     Vector2 line = q - mallet;
-                    bool lined = line.sqrMagnitude > 1e-6f && Vector2.Dot(line.normalized, dir) > 0.8f;
-                    if (!striking && (mallet - behind).magnitude < 0.05f && lined) { striking = true; strikeTime = 0f; }
+                    bool lined = line.sqrMagnitude > 1e-6f && Vector2.Dot(line.normalized, dir) > 0.7f;
+                    if (!striking && (mallet - behind).magnitude < 0.09f && lined) { striking = true; strikeTime = 0f; }
                     if (striking)
                     {
                         // דרך הפאק, בקו מהמחבט אליו (קרוב לכיוון המכה, כי התחיל מאחוריו)
                         target = q + (line.sqrMagnitude > 1e-6f ? line.normalized : dir) * 0.15f;
                         strikeTime += dt;
-                        // המכה נגמרה (הגיע ליעד, או חצי שנייה עברה, או הפאק כבר בדרך אליך): מתחיל מחדש
-                        if ((mallet - target).magnitude < 0.01f || strikeTime > 0.5f || v.y < -0.6f) { striking = false; attackTime = 0f; }
+                        // המכה נגמרה (הגיע ליעד, חצי שנייה עברה, הפאק כבר בדרך אליך, או שהפאק זז והוא כבר לא מאחוריו): מתחיל מחדש
+                        bool lost = line.sqrMagnitude > 1e-6f && Vector2.Dot(line.normalized, dir) < 0.3f;
+                        if ((mallet - target).magnitude < 0.01f || strikeTime > 0.5f || v.y < -0.6f || lost) { striking = false; attackTime = 0f; }
                     }
                     else if (attackTime > 1.2f)
                     {
@@ -185,7 +188,7 @@ namespace MotionArcade.Games.AirHockey
                         target = (mallet - beside).magnitude > 0.04f ? beside : new Vector2(q.x - side * 0.2f, q.y);
                         if (attackTime > 3f) attackTime = 0f;
                     }
-                    else target = behind;
+                    else { target = behind; approach = true; }
                 }
             }
             else if (v.y > 0.05f)
@@ -206,6 +209,7 @@ namespace MotionArcade.Games.AirHockey
                 target = new Vector2(now.x * 0.4f, home);
             }
 
+            bool approaching = approach; approach = false;
             // לא נכנס בפאק שבינו לבין השער שלו: עוקף מהצד. גם באמצע מכה (ב-Easy הוא רואה באיחור ומנחש לא נכון
             // איפה הפאק, ומכה שהתחילה מהצד הלא נכון עלולה לשלוח אותו פנימה): אז המכה נעצרת
             if (puckInPlay)
@@ -214,7 +218,7 @@ namespace MotionArcade.Games.AirHockey
                 if (striking && (safe - target).sqrMagnitude > 1e-6f) { striking = false; attackTime = 0f; }
                 target = safe;
             }
-            return Move(mallet, target, striking, dt, rink);
+            return Move(mallet, target, striking, dt, rink, approaching ? settings.MaxSpeed * 0.6f : 0f);
         }
 
         // פאק קרוב שנמצא בצד של השער שלו (y גבוה יותר מהמחבט), כשמכה בכיוון התנועה הייתה שולחת אותו אל פתח השער:
@@ -239,25 +243,26 @@ namespace MotionArcade.Games.AirHockey
         {
             Vector2 dir = (puck - mallet).normalized;
             if (dir.y < 0.15f) return false;   // הצידה או אחורה
+            if (dir.y > 0.5f) return true;     // בחדות אל הקצה שלו: גם בלי לכוון לפתח, הפאק חוזר מהדופן או נכנס דרך הצד
             float x = puck.x + dir.x / dir.y * (rink.HalfLength - puck.y);
             return Mathf.Abs(x) < rink.GoalHalfWidth + rink.PuckRadius * 2f;
         }
 
         // תנועה של יד: מאיצה עד המהירות המותרת, בולמת לפני היעד (חוץ ממכה, שעוברת דרכו), ולא יותר מהתאוצה
-        private Vector2 Move(Vector2 mallet, Vector2 target, bool strike, float dt, in HockeyRink rink)
+        private Vector2 Move(Vector2 mallet, Vector2 target, bool strike, float dt, in HockeyRink rink, float minSpeed = 0f)
         {
             // היעד בתוך האזור שלו: כך הוא בולם לפני הדופן או קו האמצע, ולא נעצר בהם בבת אחת
             Vector2 inside = Clamp(target, rink);
             bool atEdge = (inside - target).sqrMagnitude > 1e-6f;
             target = inside;
             if (strike || !hasTarget) smoothTarget = target;
-            else smoothTarget = Vector2.Lerp(smoothTarget, target, 1f - Mathf.Exp(-dt * 14f));
+            else smoothTarget = Vector2.Lerp(smoothTarget, target, 1f - Mathf.Exp(-dt * 25f));
             hasTarget = true;
             float limit = strike ? settings.StrikeSpeed : settings.MaxSpeed;
             float accel = strike ? settings.StrikeAccel : settings.Accel;
             Vector2 to = smoothTarget - mallet;
             float distance = to.magnitude;
-            float want = strike && !atEdge ? limit : Mathf.Min(limit, Mathf.Sqrt(2f * accel * distance) * 0.9f);
+            float want = strike && !atEdge ? limit : Mathf.Min(limit, Mathf.Max(minSpeed, Mathf.Sqrt(2f * accel * distance) * 0.9f));
             Vector2 direction = distance > 1e-4f ? to / distance : Vector2.zero;
             // גם במכה: בולם לפני הקצה של האזור שלו בכיוון התנועה
             want = Mathf.Min(want, Mathf.Sqrt(2f * accel * EdgeDistance(mallet, direction, rink)));

@@ -17,12 +17,13 @@ namespace MotionArcade.Interaction
         [SerializeField] private XROrigin origin;
         [SerializeField] private CharacterController body;
         [SerializeField] private CapsuleCollider probe;        // טריגר עזר לחישוב חדירה
-        [SerializeField] private LayerMask solid = 1;           // Default: מכונות, קירות
+        [SerializeField] private LayerMask solid = 1 | 1 << 2; // Default (מכונות, קירות) ו-Ignore Raycast (BodyBlocker)
         [SerializeField] private float radius = 0.2f;
 
         private readonly Collider[] hits = new Collider[24];
         private readonly HashSet<Collider> ignored = new HashSet<Collider>();
         private float nextScan;
+        private int blockerCount = -1;
         private Vector3 lastFreeHead;   // איפה הראש עמד לאחרונה בלי להיות בתוך משהו
         private bool hasFree;
 
@@ -86,9 +87,13 @@ namespace MotionArcade.Interaction
             return push;
         }
 
-        // חפצי המשחק (כדורים, פטישים, חצים, שרביט): הגוף עובר דרכם בלי להזיז אותם. נסרק כל שנייה, כי המשחקים נטענים אחרי ההתחלה
+        // חפצי המשחק (כדורים, פטישים, חצים, שרביט): הגוף עובר דרכם בלי להזיז אותם, וגם החוסמים של הגוף (BodyBlocker)
+        // לא עוצרים אותם. נסרק כל שנייה, כי המשחקים נטענים אחרי ההתחלה
         private void IgnoreProps()
         {
+            BodyBlocker[] blockers = FindObjectsByType<BodyBlocker>(FindObjectsSortMode.None);
+            // משחק חדש נטען (עם חוסמים חדשים): מתאימים מחדש את כל החפצים לכל החוסמים
+            if (blockers.Length != blockerCount) { ignored.Clear(); blockerCount = blockers.Length; }
             foreach (Rigidbody rb in FindObjectsByType<Rigidbody>(FindObjectsSortMode.None))
             {
                 if (rb.transform.IsChildOf(origin.transform)) continue;
@@ -96,6 +101,8 @@ namespace MotionArcade.Interaction
                 {
                     if (!ignored.Add(c)) continue;
                     Physics.IgnoreCollision(body, c, true);
+                    foreach (BodyBlocker blocker in blockers)
+                        if (blocker.TryGetComponent(out Collider wall)) Physics.IgnoreCollision(wall, c, true);
                 }
             }
         }

@@ -7088,7 +7088,7 @@ MonoBehaviour:
   probe: {fileID: 1789069450}
   solid:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 5
   radius: 0.2
 --- !u!1 &390595318
 GameObject:
