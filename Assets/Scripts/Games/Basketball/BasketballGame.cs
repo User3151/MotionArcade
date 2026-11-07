@@ -2,13 +2,17 @@ using MotionArcade.Core;
 using MotionArcade.Diagnostics;
 using MotionArcade.Feedback;
 using MotionArcade.Interaction;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MotionArcade.Games.Basketball
 {
     // כדורסל ארקייד, כמו מכונת Pop-A-Shot: מגש כדורים מול השחקן, מסילה משופעת שמחזירה כל כדור למגש,
     // ורשתות בצדדים. 60 שניות, 2 נקודות לסל, כפול ב-10 השניות האחרונות.
     // הכדורים נעולים עד START (כמו במכונה אמיתית), כדי שהשחקן לא יתחיל לזרוק בלי לשים לב שהסבב לא התחיל.
+    // אתגרים (גיא): כפתור MODE בין סבבים: CLASSIC, 10 IN 30, 5 IN A ROW, 3 SWISHES. אתגר שהושלם מסיים את הסבב,
+    // והשיא (הזמן הכי קצר) נשמר. החוקים עצמם ב-BasketballChallenge.
     public class BasketballGame : GameStation
     {
         private const string BonusHint = "DOUBLE POINTS!";
@@ -36,10 +40,34 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
         [SerializeField] private HoopAssist assist;        // עזרת כיוון לכל הכדורים
 
+        [Header("Challenges")]
+        [SerializeField] private Button modeButton;
+        [SerializeField] private TMP_Text modeLabel;
+        [SerializeField] private TMP_Text modeInfo;
+        [SerializeField] private TMP_Text bestText;
+
+        private const string ModeKey = "basketball.mode";
+        private readonly BasketballChallenge challenge = new BasketballChallenge();
+        private string[][] progressHints;   // [mode][progress]: "7 / 10", מחושב פעם אחת (בלי GC באמצע סבב)
+        private string resultDetails;
+        private float playStart;
+
         private readonly Collider[] overlap = new Collider[8];   // מוקצה פעם אחת: בדיקת מקום פנוי במגש בלי GC
 
-        public override string PlayingHint =>
-            Phase == RoundPhase.Playing && BasketballScoring.IsBonus(TimeLeft) ? BonusHint : null;
+        public BasketballChallenge Challenge => challenge;
+        public BasketballMode Mode => challenge.Mode;
+        public override string ResultDetails => resultDetails;
+
+        public override string PlayingHint
+        {
+            get
+            {
+                if (Phase != RoundPhase.Playing) return null;
+                if (challenge.Mode == BasketballMode.Classic) return BasketballScoring.IsBonus(TimeLeft) ? BonusHint : null;
+                string[] hints = progressHints[(int)challenge.Mode];
+                return hints[System.Math.Min(challenge.Progress, hints.Length - 1)];
+            }
+        }
 
         protected override void Awake()
         {
@@ -49,6 +77,51 @@ namespace MotionArcade.Games.Basketball
             IThrowAssist hoop = assist != null ? assist : null;
             foreach (Ball ball in balls)
                 if (ball.TryGetComponent(out ControllerThrow thrower)) thrower.Assist = hoop;
+
+            progressHints = new string[4][];
+            for (int m = 0; m < 4; m++)
+            {
+                var info = BasketballChallenge.For((BasketballMode)m);
+                string prefix = (BasketballMode)m == BasketballMode.FiveInARow ? "IN A ROW " : (BasketballMode)m == BasketballMode.ThreeSwishes ? "SWISHES " : "BASKETS ";
+                progressHints[m] = new string[info.Target + 1];
+                for (int p = 0; p <= info.Target; p++) progressHints[m][p] = prefix + p + " / " + info.Target;
+            }
+            SetMode((BasketballMode)Mathf.Clamp(PlayerPrefs.GetInt(ModeKey, 0), 0, 3));
+        }
+
+        private void OnEnable() { if (modeButton != null) modeButton.onClick.AddListener(NextMode); }
+        private void OnDisable() { if (modeButton != null) modeButton.onClick.RemoveListener(NextMode); }
+
+        private void NextMode()
+        {
+            if (IsRunning) return;
+            SetMode((BasketballMode)(((int)challenge.Mode + 1) % 4));
+            PlayerPrefs.SetInt(ModeKey, (int)challenge.Mode);
+        }
+
+        public void SetMode(BasketballMode mode)
+        {
+            if (IsRunning) return;
+            challenge.SetMode(mode);
+            SetRoundSeconds(challenge.Current.Seconds);
+            ShowMode();
+        }
+
+        private string BestKey => "basketball.best." + challenge.Mode;
+
+        private void ShowMode()
+        {
+            if (modeLabel != null) modeLabel.text = "<  " + challenge.Current.Name + "  >";
+            if (modeInfo != null) modeInfo.text = challenge.Current.Description;
+            if (modeButton != null) modeButton.interactable = !IsRunning;
+            if (bestText != null)
+            {
+                bool has = PlayerPrefs.HasKey(BestKey);
+                float best = PlayerPrefs.GetFloat(BestKey, 0f);
+                bestText.text = !has ? "No record yet"
+                    : challenge.Mode == BasketballMode.Classic ? "Best: " + Mathf.RoundToInt(best) + " points"
+                    : "Best: " + best.ToString("0.0") + " s";
+            }
         }
 
         // ב-Start ולא ב-Awake: כל כדור מוצא את ה-XRGrabInteractable שלו ב-Awake שלו, שאולי עוד לא רץ
@@ -59,7 +132,8 @@ namespace MotionArcade.Games.Basketball
         protected override void OnPhaseEntered(RoundPhase phase)
         {
             SetBallsGrabbable(IsRunning);
-            if (phase == RoundPhase.Countdown) ResetBalls();
+            if (phase == RoundPhase.Countdown) { ResetBalls(); challenge.Reset(); resultDetails = null; }
+            ShowMode();
         }
 
         private void SetBallsGrabbable(bool value)
@@ -68,7 +142,11 @@ namespace MotionArcade.Games.Basketball
                 if (ball != null) ball.SetGrabbable(value);
         }
 
-        protected override void OnPlayingStarted() { }
+        protected override void OnPlayingStarted()
+        {
+            challenge.Reset();
+            playStart = Time.time;
+        }
 
         private void ResetBalls()
         {
@@ -84,7 +162,39 @@ namespace MotionArcade.Games.Basketball
             Physics.SyncTransforms();
         }
 
-        protected override void OnPlayingEnded() { }
+        protected override void OnPlayingEnded()
+        {
+            if (challenge == null) return;
+            var info = challenge.Current;
+            bool has = PlayerPrefs.HasKey(BestKey);
+            float best = PlayerPrefs.GetFloat(BestKey, 0f);
+            if (challenge.Mode == BasketballMode.Classic)
+            {
+                bool record = BasketballChallenge.Better(BasketballMode.Classic, Score, best, has) && Score > 0;
+                if (record) PlayerPrefs.SetFloat(BestKey, Score);
+                resultDetails = record ? "New record!" : has ? "Best: " + Mathf.RoundToInt(best) + " points" : null;
+                return;
+            }
+            if (challenge.Complete)
+            {
+                bool record = BasketballChallenge.Better(challenge.Mode, challenge.CompletedAt, best, has);
+                if (record) PlayerPrefs.SetFloat(BestKey, challenge.CompletedAt);
+                resultDetails = "CHALLENGE COMPLETE!\n" + info.Name + " in " + challenge.CompletedAt.ToString("0.0") + " s"
+                    + (record ? "\nNew record!" : "\nBest: " + best.ToString("0.0") + " s");
+            }
+            else
+            {
+                resultDetails = "Not this time: " + challenge.Progress + " of " + info.Target
+                    + (challenge.Mode == BasketballMode.FiveInARow ? " (best run " + challenge.BestStreak + ")" : "")
+                    + "\nTry again!";
+            }
+        }
+
+        // כדור נזרק ונגמר בלי סל
+        public void Missed(Ball ball)
+        {
+            if (Phase == RoundPhase.Playing) challenge.Miss();
+        }
 
         public bool InsideMachine(Vector3 position) => machine.Contains(transform.InverseTransformPoint(position));
         public bool InTray(Vector3 position) => tray.Contains(transform.InverseTransformPoint(position));
@@ -104,8 +214,11 @@ namespace MotionArcade.Games.Basketball
         {
             if (recorder != null && ball.TouchedHoop) recorder.NoteResult(ball.gameObject, "BASKET");
 
-            int points = BasketballScoring.PointsFor(TimeLeft);
+            ball.MarkScored();
+            // באתגרים כל סל = נקודה אחת (הלוח מראה כמה סלים); ב-Classic: 2, כפול בסוף
+            int points = challenge.Mode == BasketballMode.Classic ? BasketballScoring.PointsFor(TimeLeft) : 1;
             bool counted = AddScore(points);
+            bool completed = counted && challenge.Basket(!ball.TouchedHoop, Time.time - playStart);
 
             // כל סל עובר ברשת. סוויש (בלי לגעת בטבעת או בלוח): הרשת נשמעת חזק יותר והקהל מריע יותר.
             // אחרי נגיעה הצלצול של הטבעת כבר נשמע (ImpactSound), והרשת חלשה יותר.
@@ -116,6 +229,7 @@ namespace MotionArcade.Games.Basketball
             if (recorder != null && swish) recorder.NoteResult(ball.gameObject, "SWISH");
             Haptics.Pulse(ball.LastHolder, Haptics.Strong, 0.15f);
             if (counted && popup != null) popup.Show(points);
+            if (completed) FinishRound();
         }
 
         // מחזיר כדור לנקודה פנויה מעל המגש. כדור שמוצב בתוך כדור אחר נזרק על ידי הפיזיקה, לכן בודקים קודם.

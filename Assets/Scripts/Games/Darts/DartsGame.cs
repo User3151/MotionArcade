@@ -21,7 +21,7 @@ namespace MotionArcade.Games.Darts
         [SerializeField] private Bounds playArea;     // חץ מחוץ לזה הלך לאיבוד
         [SerializeField] private float returnAllDelay = 1f;
         [SerializeField] private float returnOneDelay = 0.8f;   // חץ שננעץ חוזר למחזיק אחרי רגע (רואים איפה פגע)
-        [SerializeField] private float lostSeconds = 1.5f;
+        [SerializeField] private float lostSeconds = 1f;   // חץ שלא בלוח ולא במחזיק (נפל, מתגלגל) חוזר אחרי זה
 
         [Header("Board")]
         [SerializeField] private DartBoard board;
@@ -200,9 +200,9 @@ namespace MotionArcade.Games.Darts
                             lostTimers[i] = 0f;
                             break;
                         }
-                        // על הרצפה, מתחת ללוח, או מחוץ לאזור: השחקן לא יכול להגיע אליו
-                        bool resting = dart.Velocity.sqrMagnitude < 0.05f * 0.05f;
-                        lostTimers[i] = resting || !playArea.Contains(local) ? lostTimers[i] + Time.deltaTime : 0f;
+                        // על הרצפה, מתחת ללוח, או מחוץ לאזור: השחקן לא יכול להגיע אליו. גיא: חצים שנפלו התגלגלו
+                        // על הרצפה הרבה זמן לפני שחזרו (הספירה התאפסה כל עוד זזו). עכשיו הספירה רצה גם בתנועה
+                        lostTimers[i] += Time.deltaTime;
                         if (lostTimers[i] > lostSeconds)
                         {
                             ReturnOne(dart);

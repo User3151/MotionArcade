@@ -122,7 +122,11 @@ namespace MotionArcade.Tests
 
         // מריץ את הפאק והרובוט יחד; השחקן לא משחק. מחזיר איזה גול נכנס (או None).
         private static GoalScored Play(HockeyAI ai, Vector2 puck, Vector2 velocity, float seconds, out Vector2 lowestPuck, out bool leftItsHalf)
+            => Play(ai, puck, velocity, seconds, out lowestPuck, out leftItsHalf, out _);
+
+        private static GoalScored Play(HockeyAI ai, Vector2 puck, Vector2 velocity, float seconds, out Vector2 lowestPuck, out bool leftItsHalf, out bool robotTouchedLast)
         {
+            robotTouchedLast = false;
             ai.Reset();
             var mallet = new Vector2(0f, Rink.HalfLength - ai.Level.DefenseDepth);
             var nobody = new Vector2(0f, -5f);
@@ -132,6 +136,7 @@ namespace MotionArcade.Tests
                 Vector2 next = ai.Step(mallet, puck, velocity, true, Dt, Rink);
                 if (next.y < Rink.MalletRadius - 1e-4f || Mathf.Abs(next.x) > Rink.HalfWidth - Rink.MalletRadius + 1e-4f) leftItsHalf = true;
                 var r = HockeyPhysics.Step(ref puck, ref velocity, nobody, nobody, mallet, next, Dt, Rink);
+                if (r.MalletHit == 1) robotTouchedLast = true;
                 mallet = next;
                 if (puck.y < lowestPuck.y) lowestPuck = puck;
                 if (r.Goal != GoalScored.None) return r.Goal;
@@ -205,8 +210,9 @@ namespace MotionArcade.Tests
                     foreach (float y in new[] { 0.12f, 0.38f, 0.65f, 0.92f })
                     {
                         var ai = new HockeyAI(level, seed: 1 + (int)(x * 100) + (int)(y * 1000));
-                        var goal = Play(ai, new Vector2(x, y), Vector2.zero, 6f, out Vector2 lowest, out _);
-                        Assert.That(goal != GoalScored.None || lowest.y < 0f, Is.True, $"{level}: stuck with the puck at ({x}, {y})");
+                        // לא נתקע: מגיע לפאק ומזיז אותו (ב-Easy המכות חלשות ולפעמים לצד, כמו של מתחיל)
+                        var goal = Play(ai, new Vector2(x, y), Vector2.zero, 6f, out Vector2 lowest, out _, out bool touched);
+                        Assert.That(goal != GoalScored.None || lowest.y < 0f || touched, Is.True, $"{level}: stuck with the puck at ({x}, {y})");
                     }
         }
 
@@ -222,6 +228,54 @@ namespace MotionArcade.Tests
                     Assert.That(goal == GoalScored.ByOpponent || lowest.y < 0f, Is.True, $"{level} at {speed} m/s: the puck was never sent back");
                     Assert.That(left, Is.False, level + ": stays in its half");
                 }
+        }
+
+        [Test]
+        public void NeverScoresOnItself()
+        {
+            // גיא: גם ב-Hard הרובוט הכניס לעצמו גולים, מהמהירות וצורת התנועה. פאק איטי בכל מקום בחצי שלו, לכל כיוון.
+            // גול עצמי = הרובוט נגע בפאק אחרון. פאק שמתחיל 10 ס"מ מהשער ונכנס בלי שנגע בו לא נספר: גם אדם לא היה מספיק
+            int own = 0, runs = 0;
+            foreach (HockeyDifficulty level in new[] { HockeyDifficulty.Easy, HockeyDifficulty.Normal, HockeyDifficulty.Hard })
+                foreach (float x in new[] { -0.4f, -0.15f, 0f, 0.15f, 0.4f })
+                    foreach (float y in new[] { 0.15f, 0.45f, 0.75f, 0.9f })
+                        foreach (var v in new[] { Vector2.zero, new Vector2(0.5f, 0f), new Vector2(-0.4f, 0.3f), new Vector2(0.2f, 0.5f) })
+                        {
+                            var ai = new HockeyAI(level, seed: 3 + runs);
+                            runs++;
+                            if (Play(ai, new Vector2(x, y), v, 6f, out _, out _, out bool touched) == GoalScored.ByPlayer && touched) own++;
+                        }
+            Assert.That(own, Is.LessThanOrEqualTo(runs / 80), $"{own} own goals in {runs} slow-puck situations");
+        }
+
+        [Test]
+        public void MovesLikeAHand_NotInJumps()
+        {
+            // תאוצה מוגבלת: אין קפיצה מעמידה למהירות מלאה בצעד אחד
+            const float dt = 1f / 90f;
+            foreach (HockeyDifficulty level in new[] { HockeyDifficulty.Easy, HockeyDifficulty.Normal, HockeyDifficulty.Hard })
+            {
+                var ai = new HockeyAI(level, seed: 4);
+                ai.Reset();
+                var mallet = new Vector2(0f, Rink.HalfLength - ai.Level.DefenseDepth);
+                var puck = new Vector2(0.35f, -0.6f); var v = new Vector2(-0.6f, 3f);
+                var nobody = new Vector2(0f, -5f);
+                Vector2 last = Vector2.zero; float maxAccel = 0f, maxSpeed = 0f;
+                for (int i = 0; i < 400; i++)
+                {
+                    var next = ai.Step(mallet, puck, v, true, dt, Rink);
+                    HockeyPhysics.Step(ref puck, ref v, nobody, nobody, mallet, next, dt, Rink);
+                    var vel = (next - mallet) / dt; mallet = next;
+                    if (i > 0) maxAccel = Mathf.Max(maxAccel, (vel - last).magnitude / dt);
+                    maxSpeed = Mathf.Max(maxSpeed, vel.magnitude); last = vel;
+                }
+                // לפני התיקון: קפיצות של 100+ מ'/ש' לשנייה. בלימה בצעדים בדידים יכולה לעבור קצת את התאוצה
+                Assert.That(maxAccel, Is.LessThanOrEqualTo(ai.Level.StrikeAccel * 1.25f), level + " accelerates like a hand");
+                Assert.That(maxSpeed, Is.LessThanOrEqualTo(ai.Level.StrikeSpeed + 0.01f), level.ToString());
+            }
+            var easy = HockeyAI.Settings.For(HockeyDifficulty.Easy); var hard = HockeyAI.Settings.For(HockeyDifficulty.Hard);
+            Assert.That(hard.MaxSpeed, Is.LessThan(2f), "Hard is no longer a blur");
+            Assert.That(easy.Accel, Is.LessThan(hard.Accel));
         }
 
         [Test]

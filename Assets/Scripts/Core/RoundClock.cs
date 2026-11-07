@@ -17,7 +17,7 @@ namespace MotionArcade.Core
     {
         public RoundPhase Phase { get; private set; } = RoundPhase.Intro;
         public float CountdownSeconds { get; }
-        public float RoundSeconds { get; }
+        public float RoundSeconds { get; private set; }
 
         // זמן שנשאר לשלב הנוכחי. ב-Intro וב-Results אין זמן, ולכן 0.
         public float TimeLeft { get; private set; }
@@ -30,6 +30,14 @@ namespace MotionArcade.Core
             if (roundSeconds <= 0f) throw new ArgumentOutOfRangeException(nameof(roundSeconds), "a round must last more than 0 seconds");
             CountdownSeconds = Math.Max(0f, countdownSeconds);
             RoundSeconds = roundSeconds;
+        }
+
+        // אורך הסבב הבא (באתגרי הכדורסל לכל אתגר זמן אחר). רק בין סבבים
+        public bool SetRoundSeconds(float seconds)
+        {
+            if (seconds <= 0f || Phase == RoundPhase.Countdown || Phase == RoundPhase.Playing) return false;
+            RoundSeconds = seconds;
+            return true;
         }
 
         // START: מתחילים ספירה לאחור. מותר מ-Intro ומ-Results; באמצע סבב לא עושים כלום.

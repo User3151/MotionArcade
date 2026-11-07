@@ -1,17 +1,16 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using UnityEngine.XR.Interaction.Toolkit.UI;
 
 namespace MotionArcade.UI
 {
     // סליידר שגוררים עם קרן של שלט.
     // 1. הסליידר הרגיל מחשב את המיקום מנקודה על המסך. כשהקרן מפספסת את הלוח אפילו לפריים אחד, XRI נותן לו
-    //    נקודה בקצה הרחוק של הקרן, והידית קופצת לשם ובחזרה. כאן: חיתוך הקרן עם המישור של הסליידר בעולם.
-    // 2. גיא (PSVR2): הידית ריצדה מצד לצד בגרירה עם L2/R2, ובסימולטור (grip שנשאר לחוץ) לא. ההדק רשום גם ל-Select
-    //    וגם ל-UI Press, וכשהוא מרחף ליד הסף הלחיצה נפתחת ונסגרת שוב ושוב: כל לחיצה חדשה התחילה גרירה מחדש מהנקודה
-    //    שבמסך. כאן הגרירה שייכת ליד: הסליידר עוקב בעצמו (Update) אחרי הקרן של אותה יד כל עוד היא לוחצת, ושחרור
-    //    קצר מ-releaseGrace לא עוצר אותו. לחיצה חוזרת בזמן הזה ממשיכה את אותה גרירה.
+    //    נקודה בקצה הרחוק של הקרן, והידית קופצת לשם ובחזרה. כאן: נקודת הפגיעה של הקרן בעולם, ופריים בלי פגיעה מדולג.
+    // 2. גיא (PSVR2): ההדק (L2/R2) רשום גם ל-Select וגם ל-UI Press, וכשהוא מרחף ליד הסף הלחיצה נפתחת ונסגרת שוב ושוב.
+    //    לחיצה חוזרת תוך releaseGrace ממשיכה את אותה גרירה, בלי הקפיצה של הסליידר הרגיל לנקודה שבמסך.
+    // 3. גיא: אחרי שחרור הסליידר "המשיך לזוז מצד לצד" עד כמה לחיצות על R2. סליידר שנלחץ נשאר בחור (selected),
+    //    והסטיקים, שהולכים ומסתובבים איתם, הזיזו אותו כמו חיצי מקלדת. כאן אין ניווט, והוא משחרר את הבחירה בסוף הגרירה.
     // מתאים לסליידר אופקי משמאל לימין.
     public class RaySlider : Slider
     {
@@ -21,6 +20,12 @@ namespace MotionArcade.UI
         private float releasedAt = -1f;
 
         public bool Dragging => dragPointer != int.MinValue;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            navigation = new Navigation { mode = Navigation.Mode.None };
+        }
 
         public override void OnPointerDown(PointerEventData eventData)
         {
@@ -42,8 +47,12 @@ namespace MotionArcade.UI
         public override void OnDrag(PointerEventData eventData)
         {
             if (!IsActive() || !IsInteractable() || eventData.button != PointerEventData.InputButton.Left) return;
+            if (eventData.pointerId != dragPointer || releasedAt >= 0f) return;   // רק היד שגוררת, ורק בזמן לחיצה
             SetFromRay(eventData);
         }
+
+        // ניווט (סטיק / חיצים) לא מזיז את הסליידר
+        public override void OnMove(AxisEventData eventData) { }
 
         protected override void OnDisable()
         {
@@ -51,43 +60,21 @@ namespace MotionArcade.UI
             base.OnDisable();
         }
 
-        // Selectable אין Update וירטואלי: זה Update רגיל של המחלקה הזו
+        // Selectable אין Update וירטואלי: זה Update רגיל של המחלקה הזו. רק מסיים גרירה אחרי שחרור; לא מזיז דבר
         private void Update()
         {
-            if (!Dragging) return;
-            if (!IsActive() || !IsInteractable() || !TryGetModel(out TrackedDeviceModel model))
-            {
-                EndDrag();
-                return;
-            }
-            if (model.select)
-            {
-                releasedAt = -1f;
-                if (model.raycastPoints != null && model.raycastPoints.Count >= 2)
-                    SetFromLine(model.raycastPoints[0], model.raycastPoints[1]);
-            }
-            else
-            {
-                if (releasedAt < 0f) releasedAt = Time.unscaledTime;
-                if (Time.unscaledTime - releasedAt > releaseGrace) EndDrag();
-            }
+            if (!Dragging || releasedAt < 0f) return;
+            if (Time.unscaledTime - releasedAt > releaseGrace) EndDrag();
         }
 
         private void EndDrag()
         {
+            bool was = Dragging;
             dragPointer = int.MinValue;
             releasedAt = -1f;
+            if (was && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
+                EventSystem.current.SetSelectedGameObject(null);
         }
-
-        private bool TryGetModel(out TrackedDeviceModel model)
-        {
-            model = default;
-            if (EventSystem.current == null || !(EventSystem.current.currentInputModule is XRUIInputModule module)) return false;
-            IUIInteractor interactor = module.GetInteractor(dragPointer);
-            return interactor != null && interactor.TryGetUIModel(out model);
-        }
-
-        private RectTransform Area => handleRect != null ? handleRect.parent as RectTransform : fillRect != null ? fillRect.parent as RectTransform : null;
 
         private void SetFromRay(PointerEventData eventData)
         {
@@ -96,21 +83,10 @@ namespace MotionArcade.UI
             SetFromWorld(hit.worldPosition);
         }
 
-        // הקרן כקו: חותכים עם המישור של האזור שהידית נעה בו (גם אם הקרן עצמה פגעה בחפץ אחר או בכלום)
-        private void SetFromLine(Vector3 from, Vector3 to)
-        {
-            RectTransform area = Area;
-            if (area == null) return;
-            var plane = new Plane(area.forward, area.position);
-            var ray = new Ray(from, to - from);
-            if (!plane.Raycast(ray, out float distance) || distance <= 0f) return;
-            SetFromWorld(ray.GetPoint(distance));
-        }
-
         // האזור שהידית נעה בו: ממירים את הנקודה למרחב שלו, ושם x הוא המיקום לאורך הסליידר
         public void SetFromWorld(Vector3 world)
         {
-            RectTransform area = Area;
+            RectTransform area = handleRect != null ? handleRect.parent as RectTransform : fillRect != null ? fillRect.parent as RectTransform : null;
             if (area == null) return;
             Vector3 local = area.InverseTransformPoint(world);
             normalizedValue = Mathf.InverseLerp(area.rect.xMin, area.rect.xMax, local.x);

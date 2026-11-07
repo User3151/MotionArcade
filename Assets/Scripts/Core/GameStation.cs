@@ -86,6 +86,9 @@ namespace MotionArcade.Core
             if (clock.Phase == RoundPhase.Playing) OnPlayingEnded();
         }
 
+        // אורך הסבב הבא (רק בין סבבים)
+        protected bool SetRoundSeconds(float seconds) => clock.SetRoundSeconds(seconds);
+
         // כפתור START בלוח. מ-Intro או מ-Results בלבד.
         public void StartRound() => clock.Start();
 

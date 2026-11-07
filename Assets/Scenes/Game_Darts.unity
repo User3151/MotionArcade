@@ -10868,7 +10868,7 @@ MonoBehaviour:
     m_Extent: {x: 1.75, y: 1.6, z: 1.5}
   returnAllDelay: 1
   returnOneDelay: 0.8
-  lostSeconds: 1.5
+  lostSeconds: 1
   board: {fileID: 838217309}
   targetDisplay: {fileID: 1451415188}
   numberLabels:

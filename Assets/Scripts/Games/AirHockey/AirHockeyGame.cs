@@ -13,7 +13,7 @@ namespace MotionArcade.Games.AirHockey
     // הם קוד טהור במרחב של המשטח; כאן רק מחברים אותם לעולם: יד → מחבט, מצב → מיקומים, אירועים → צליל ורטט.
     // המחבט של השחקן: תופסים בידית (grip) והוא הולך אחרי היד על המשטח, בחצי של השחקן בלבד. XRI לא מזיז אותו
     // (בלי track position): הוא נשאר צמוד למשטח גם כשהיד עולה. בתפיסה הוא מחליק אל מתחת למרכז היד (גיא: תפיסה
-    // בקצה נראתה לא טבעית), ומאז הוא נשאר באותה יד עד סוף הסבב, גם אם הכפתור השתחרר קצת (הוא "ברח" לגיא באמצע).
+    // בקצה נראתה לא טבעית), ומשתחרר כשמשחררים את הכפתור (גיא העדיף את זה על מחבט שנדבק ליד עד סוף הסבב).
     // מחוץ לסבב המחבט מחכה בגומה הימנית הקרובה, וה-START מעביר אותו לשולחן.
     public class AirHockeyGame : GameStation
     {
@@ -34,6 +34,9 @@ namespace MotionArcade.Games.AirHockey
         [SerializeField] private TMP_Text youScore;
         [SerializeField] private TMP_Text opponentScore;
         [SerializeField] private TMP_Text rule;
+        [SerializeField] private GameObject countdown;      // 3-2-1 מעל הניקוד: רק בזמן הספירה
+        [SerializeField] private GameObject dash;           // הנקודותיים בין הניקודים: מוסתרות בזמן הספירה
+        [SerializeField] private Transform puckSpin;        // הפאק המצויר: מסתובב לפי התנועה, שהנקודה עליו תראה אותה
         [SerializeField] private Button difficultyButton;
         [SerializeField] private TMP_Text difficultyLabel;
         [SerializeField] private TMP_Text difficultyInfo;   // שורה שמסבירה את הרמה
@@ -62,7 +65,7 @@ namespace MotionArcade.Games.AirHockey
         private Vector2 puckPosition, puckVelocity, playerPosition, opponentPosition;
         private bool puckInPlay;
         private float serveTimer;
-        private IXRInteractor holder;     // היד שהמחבט הולך אחריה (נשארת גם אחרי שחרור, עד סוף הסבב)
+        private IXRInteractor holder;     // היד שמחזיקה את המחבט
         private Vector2 grabOffset;       // נעלם תוך centerSeconds: המחבט מחליק אל מרכז היד בלי לקפוץ
         private const float CenterSeconds = 0.15f;
         private const float PlayerServeY = -0.62f;     // גיא: הפאק היה רחוק מדי, היה צריך להתכופף קדימה
@@ -92,6 +95,15 @@ namespace MotionArcade.Games.AirHockey
             ShowDisplay();
             ToRest();
             playerGrab.enabled = false;
+            // גיא: לפעמים במקום הנקודותיים היה כתוב 3. זו הספירה לאחור, שנשארה מהפעם הקודמת: הלוח שמפעיל אותה
+            // (ScoreBoard) כבוי מחוץ למשחק, אז בלי זה היא נשארה גלויה
+            ShowCountdown(false);
+        }
+
+        private void ShowCountdown(bool show)
+        {
+            if (countdown != null) countdown.SetActive(show);
+            if (dash != null) dash.SetActive(!show);
         }
 
         private void OnEnable()
@@ -138,8 +150,10 @@ namespace MotionArcade.Games.AirHockey
             Haptics.Pulse(holder, Haptics.Light, 0.04f);
         }
 
-        // שחרור לא משחרר: המחבט ממשיך עם היד עד סוף הסבב. יד אחרת שתופסת אותו לוקחת אותו
-        private void HandleRelease(SelectExitEventArgs args) { }
+        private void HandleRelease(SelectExitEventArgs args)
+        {
+            if (args.interactorObject == holder) holder = null;
+        }
 
         public bool Holding => holder != null;
 
@@ -158,6 +172,7 @@ namespace MotionArcade.Games.AirHockey
         protected override void OnPhaseEntered(RoundPhase phase)
         {
             bool running = phase == RoundPhase.Countdown || phase == RoundPhase.Playing;
+            ShowCountdown(phase == RoundPhase.Countdown);
             playerGrab.enabled = running;
             if (phase == RoundPhase.Countdown)
             {
@@ -243,6 +258,9 @@ namespace MotionArcade.Games.AirHockey
             playerMallet.position = ToWorld(playerPosition, playerY);
             opponentMallet.position = ToWorld(opponentPosition, malletY);
             if (puckInPlay) puck.position = ToWorld(puckPosition, puckY);
+            // סיבוב לפי המהירות: פאק אמיתי מסתובב אחרי מכה בצד, וזה מראה שהוא זז
+            if (puckSpin != null && puckInPlay && Phase == RoundPhase.Playing)
+                puckSpin.Rotate(0f, puckVelocity.magnitude * 160f * Time.deltaTime * (puckVelocity.x >= 0f ? 1f : -1f), 0f, Space.Self);
         }
 
         private void Goal(GoalScored goal)

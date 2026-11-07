@@ -30,6 +30,11 @@ namespace MotionArcade.Games.Basketball
         // מאז שנזרק, נגע בטבעת או בלוח? סל בלי נגיעה = "סוויש", עם צליל ותשואות גדולות יותר
         public bool TouchedHoop { get; private set; }
 
+        // זריקה באוויר שעוד לא נגמרה (לאתגרים: זריקה שנגמרת בלי סל היא החטאה). כדור שרק נשמט מהיד לא נחשב זריקה
+        public bool Thrown { get; private set; }
+        private bool releasedThisStep;
+        private const float ThrowSpeed = 1.2f;
+
         public bool IsHeld => grab.isSelected;
         public Vector3 Velocity => body.linearVelocity;
         public IXRInteractor LastHolder { get; private set; }
@@ -43,11 +48,26 @@ namespace MotionArcade.Games.Basketball
         private void OnEnable()
         {
             grab.selectEntered.AddListener(HandleGrabbed);
+            grab.selectExited.AddListener(HandleReleased);
         }
 
         private void OnDisable()
         {
             grab.selectEntered.RemoveListener(HandleGrabbed);
+            grab.selectExited.RemoveListener(HandleReleased);
+        }
+
+        // המהירות נקבעת ב-ControllerThrow אחרי השחרור: בודקים בצעד הפיזיקה הבא
+        private void HandleReleased(SelectExitEventArgs args) => releasedThisStep = true;
+
+        // סל: הזריקה הצליחה
+        public void MarkScored() => Thrown = false;
+
+        private void EndThrow()
+        {
+            if (!Thrown) return;
+            Thrown = false;
+            game.Missed(this);
         }
 
         public void Init(BasketballGame owner) => game = owner;
@@ -62,6 +82,7 @@ namespace MotionArcade.Games.Basketball
             stillTimer = 0f;
             ringDone = false;   // זריקה חדשה
             TouchedHoop = false;
+            Thrown = false;
             Haptics.Pulse(args.interactorObject, Haptics.Light, 0.04f);
         }
 
@@ -76,6 +97,13 @@ namespace MotionArcade.Games.Basketball
 
             Vector3 position = body.position;
             float dt = Time.fixedDeltaTime;
+            if (releasedThisStep)
+            {
+                releasedThisStep = false;
+                Thrown = body.linearVelocity.magnitude > ThrowSpeed;
+            }
+            // חזר במסילה אל המגש בלי סל: החטאה
+            if (Thrown && game.InTray(position)) EndThrow();
 
             if (hasPrevious && !ringDone) ringDone = game.CheckRing(this, previous, position);
             previous = position;
@@ -98,6 +126,7 @@ namespace MotionArcade.Games.Basketball
         public void Teleport(Vector3 position)
         {
             if (IsHeld) return;
+            if (game != null) EndThrow();   // הלך לאיבוד או נתקע: גם החטאה
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.position = position;
