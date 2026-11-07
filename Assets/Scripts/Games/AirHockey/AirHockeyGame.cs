@@ -75,6 +75,16 @@ namespace MotionArcade.Games.AirHockey
         private string resultDetails;
 
         public override bool HasTimer => false;
+
+        protected override string RecordKey => "airhockey." + difficulty;
+
+        // השיא בהוקי: ההפרש (ובשוויון, יותר גולים). כתוב כמו תוצאה: "7 : 2 on HARD"
+        protected override bool TryGetRecord(out float value, out string text)
+        {
+            value = match.Player - match.Opponent + match.Player * 0.01f;
+            text = match.Player + " : " + match.Opponent + " on " + difficulty.ToString().ToUpperInvariant();
+            return match.Over;
+        }
         public override string ResultDetails => resultDetails;
         public HockeyMatch Match => match;
         public HockeyDifficulty Difficulty => difficulty;

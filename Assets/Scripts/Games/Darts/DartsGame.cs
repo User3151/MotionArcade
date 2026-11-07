@@ -61,6 +61,15 @@ namespace MotionArcade.Games.Darts
         }
         public int Target => progress.Target;
 
+        // השיא בחצים: כמה מטרות, ואם הגיע עד הבול, כמה מהר
+        protected override bool TryGetRecord(out float value, out string text)
+        {
+            bool all = FinishedEarly;
+            value = Score + (all ? Mathf.Max(0f, RoundSeconds - PlayedSeconds) / 1000f : 0f);
+            text = all ? "all " + Score + " targets in " + PlayedSeconds.ToString("0.0") + " s" : Score + (Score == 1 ? " target" : " targets");
+            return Score > 0;
+        }
+
         public override string PlayingHint => Phase == RoundPhase.Playing && !progress.IsFinished ? hints[Target] : null;
 
         protected override void Awake()

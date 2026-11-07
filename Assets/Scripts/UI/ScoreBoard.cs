@@ -131,21 +131,9 @@ namespace MotionArcade.UI
             string text = (station.FinishedEarly ? "Complete!" : "Time's up!") + $"\nScore: {station.Score}";
             string details = station.ResultDetails;
             if (!string.IsNullOrEmpty(details)) text += "\n" + details;
-            SessionManager session = SessionManager.Instance;
-            if (session == null) return text;
-
-            // הסבב הזה כבר נרשם לפני שהלוח מתעדכן, אז משווים רק לסבבים שלפניו
-            var rounds = session.Log.Rounds;
-            bool hasEarlier = false;
-            int earlierBest = 0;
-            for (int i = 0; i < rounds.Count - 1; i++)
-            {
-                if (rounds[i].GameId != station.GameId) continue;
-                if (!hasEarlier || rounds[i].Score > earlierBest) earlierBest = rounds[i].Score;
-                hasEarlier = true;
-            }
-            if (hasEarlier)
-                text += station.Score > earlierBest ? "\nNew session best!" : $"\nSession best: {earlierBest}";
+            // השיא האישי, שנשמר בין הפעלות (במקום "Session best" שנעלם כשסוגרים את המשחק)
+            if (!string.IsNullOrEmpty(station.BestLine))
+                text += station.NewBest ? "\n<color=#FFD633><b>" + station.BestLine + "</b></color>" : "\n" + station.BestLine;
             return text;
         }
 

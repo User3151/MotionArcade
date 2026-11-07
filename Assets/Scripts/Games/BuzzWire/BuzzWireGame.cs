@@ -57,6 +57,16 @@ namespace MotionArcade.Games.BuzzWire
             Phase != RoundPhase.Playing || progress.OnWire || progress.Finished ? null :
             progress.Checkpoint <= 0f ? StartHint : BackHint;
 
+        // שיא נפרד לכל מסלול
+        protected override string RecordKey => "buzzwire." + current;
+
+        protected override bool TryGetRecord(out float value, out string text)
+        {
+            value = Score;
+            text = Score + " points on " + Track.DisplayName;
+            return Score > 0;
+        }
+
         public override string ResultDetails
         {
             get

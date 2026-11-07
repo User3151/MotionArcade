@@ -49,6 +49,44 @@ namespace MotionArcade.Core
         public float TimeLeft => clock.TimeLeft;
         public float RoundSeconds => clock.RoundSeconds;
         public int Score { get; private set; }
+        public float PlayedSeconds { get; private set; }   // כמה זמן נמשך הסבב האחרון (גם אם הסתיים מוקדם)
+
+        // ===== שיא אישי (גיא: בכל משחק, בסוף כל סבב "Best score", ומתעדכן כששוברים אותו) =====
+        // נשמר ב-PlayerPrefs, כך שהוא נשאר בין הפעלות. כל משחק קובע מה נחשב שיא (גבוה יותר = טוב יותר) ואיך כותבים אותו.
+        private const string BestPrefix = "best.";
+        public string BestLine { get; private set; }    // לשורת התוצאה: "NEW BEST SCORE!" או "Best score: ..."
+        public bool NewBest { get; private set; }
+
+        // מפתח השיא: משחק עם כמה מצבים (רמות, מסלולים, אתגרים) שומר שיא נפרד לכל אחד
+        protected virtual string RecordKey => gameId;
+
+        // השיא של הסבב שנגמר: ערך להשוואה (גבוה = טוב) וטקסט להצגה. false = הסבב הזה לא קובע שיא
+        protected virtual bool TryGetRecord(out float value, out string text)
+        {
+            value = Score;
+            text = Score == 1 ? "1 point" : Score + " points";
+            return Score > 0;
+        }
+
+        // השיא השמור למצב הנוכחי (למשל ללוח לפני סבב), או null
+        public string BestText => PlayerPrefs.HasKey(BestPrefix + RecordKey) ? PlayerPrefs.GetString(BestPrefix + RecordKey + ".text", "") : null;
+
+        private void UpdateBest()
+        {
+            string key = BestPrefix + RecordKey;
+            bool has = PlayerPrefs.HasKey(key);
+            float best = PlayerPrefs.GetFloat(key, 0f);
+            NewBest = false;
+            if (TryGetRecord(out float value, out string text) && (!has || value > best))
+            {
+                PlayerPrefs.SetFloat(key, value);
+                PlayerPrefs.SetString(key + ".text", text);
+                PlayerPrefs.Save();
+                NewBest = true;
+            }
+            string stored = BestText;
+            BestLine = NewBest ? "NEW BEST SCORE!  " + stored : stored != null ? "Best score: " + stored : null;
+        }
 
         // שורה קצרה שהלוח מציג בזמן משחק, למשל "DOUBLE POINTS!" בכדורסל. null = כלום.
         // הלוח קורא אותה פעם בשנייה, אז היא צריכה להחזיר מחרוזת קבועה ולא לבנות חדשה (בלי GC).
@@ -74,7 +112,11 @@ namespace MotionArcade.Core
         protected virtual void Update()
         {
             clock.Tick(Time.deltaTime);
-            if (clock.Phase == RoundPhase.Playing) OnPlayingUpdate();
+            if (clock.Phase == RoundPhase.Playing)
+            {
+                PlayedSeconds += Time.deltaTime;
+                OnPlayingUpdate();
+            }
         }
 
         // הסצנה נפרקת באמצע סבב (חזרה לאולם): סוגרים את הסבב בלי לדווח עליו
@@ -127,8 +169,11 @@ namespace MotionArcade.Core
                 ScoreChanged?.Invoke(Score);
             }
 
+            if (next == RoundPhase.Results) UpdateBest();   // אחרי OnPlayingEnded (המשחק סיכם את הסבב), לפני שהלוח מתעדכן
+
             if (next == RoundPhase.Playing)
             {
+                PlayedSeconds = 0f;
                 OnPlayingStarted();
                 onRoundStarted?.Invoke();
             }

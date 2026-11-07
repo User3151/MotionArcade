@@ -92,6 +92,11 @@ namespace MotionArcade.Tests
                 var so = new SerializedObject(game);
                 foreach (string f in new[] { "modeButton", "modeLabel", "modeInfo", "bestText" })
                     Assert.That(so.FindProperty(f).objectReferenceValue, Is.Not.Null, f);
+                // גיא: צליל מספק של קליעה. פעמון על סל, ארפג'ו על סוויש, פנפרה על אתגר שהושלם
+                foreach (string f in new[] { "chime", "basketChime", "swishChime", "challengeChime" })
+                    Assert.That(so.FindProperty(f).objectReferenceValue, Is.Not.Null, f);
+                var chime = (AudioSource)so.FindProperty("chime").objectReferenceValue;
+                Assert.That(chime.outputAudioMixerGroup != null && chime.outputAudioMixerGroup.name == "SFX", Is.True);
                 var button = (UnityEngine.UI.Button)so.FindProperty("modeButton").objectReferenceValue;
                 Assert.That(button.transform.IsChildOf(game.transform.Find("Controls")), Is.True, "on the game's panel");
             }

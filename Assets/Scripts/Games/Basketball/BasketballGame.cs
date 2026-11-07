@@ -36,6 +36,10 @@ namespace MotionArcade.Games.Basketball
         [SerializeField] private AudioClip swishClip;      // הכדור עובר ברשת
         [SerializeField] private AudioSource crowd;        // הקהל מסביב (בלי מיקום)
         [SerializeField] private AudioClip[] cheerClips;
+        [SerializeField] private AudioSource chime;            // צליל "קלעת!" של המכונה (גיא: צליל מספק של קליעה)
+        [SerializeField] private AudioClip basketChime;
+        [SerializeField] private AudioClip swishChime;
+        [SerializeField] private AudioClip challengeChime;
         [SerializeField] private ScorePopup popup;
         [SerializeField] private ThrowRecorder recorder;   // מדידת זריקות (פיתוח בלבד)
         [SerializeField] private HoopAssist assist;        // עזרת כיוון לכל הכדורים
@@ -107,7 +111,22 @@ namespace MotionArcade.Games.Basketball
             ShowMode();
         }
 
-        private string BestKey => "basketball.best." + challenge.Mode;
+        // השיא נשמר ב-GameStation (כמו בכל המשחקים), שיא נפרד לכל מצב.
+        // Classic: נקודות. אתגר: רק כשהושלם, וזמן קצר יותר = טוב יותר
+        protected override string RecordKey => "basketball." + challenge.Mode;
+
+        protected override bool TryGetRecord(out float value, out string text)
+        {
+            if (challenge.Mode == BasketballMode.Classic)
+            {
+                value = Score;
+                text = Score + " points";
+                return Score > 0;
+            }
+            value = 1000f - challenge.CompletedAt;
+            text = challenge.Current.Name + " in " + challenge.CompletedAt.ToString("0.0") + " s";
+            return challenge.Complete;
+        }
 
         private void ShowMode()
         {
@@ -116,11 +135,8 @@ namespace MotionArcade.Games.Basketball
             if (modeButton != null) modeButton.interactable = !IsRunning;
             if (bestText != null)
             {
-                bool has = PlayerPrefs.HasKey(BestKey);
-                float best = PlayerPrefs.GetFloat(BestKey, 0f);
-                bestText.text = !has ? "No record yet"
-                    : challenge.Mode == BasketballMode.Classic ? "Best: " + Mathf.RoundToInt(best) + " points"
-                    : "Best: " + best.ToString("0.0") + " s";
+                string best = BestText;
+                bestText.text = best == null ? "No best score yet" : "Best score: " + best;
             }
         }
 
@@ -166,28 +182,14 @@ namespace MotionArcade.Games.Basketball
         {
             if (challenge == null) return;
             var info = challenge.Current;
-            bool has = PlayerPrefs.HasKey(BestKey);
-            float best = PlayerPrefs.GetFloat(BestKey, 0f);
-            if (challenge.Mode == BasketballMode.Classic)
-            {
-                bool record = BasketballChallenge.Better(BasketballMode.Classic, Score, best, has) && Score > 0;
-                if (record) PlayerPrefs.SetFloat(BestKey, Score);
-                resultDetails = record ? "New record!" : has ? "Best: " + Mathf.RoundToInt(best) + " points" : null;
-                return;
-            }
-            if (challenge.Complete)
-            {
-                bool record = BasketballChallenge.Better(challenge.Mode, challenge.CompletedAt, best, has);
-                if (record) PlayerPrefs.SetFloat(BestKey, challenge.CompletedAt);
-                resultDetails = "CHALLENGE COMPLETE!\n" + info.Name + " in " + challenge.CompletedAt.ToString("0.0") + " s"
-                    + (record ? "\nNew record!" : "\nBest: " + best.ToString("0.0") + " s");
-            }
+            // השיא עצמו (Best score) נכתב בשורה משלו, מ-GameStation
+            if (challenge.Mode == BasketballMode.Classic) resultDetails = null;
+            else if (challenge.Complete)
+                resultDetails = "CHALLENGE COMPLETE!\n" + info.Name + " in " + challenge.CompletedAt.ToString("0.0") + " s";
             else
-            {
                 resultDetails = "Not this time: " + challenge.Progress + " of " + info.Target
                     + (challenge.Mode == BasketballMode.FiveInARow ? " (best run " + challenge.BestStreak + ")" : "")
                     + "\nTry again!";
-            }
         }
 
         // כדור נזרק ונגמר בלי סל
@@ -229,6 +231,11 @@ namespace MotionArcade.Games.Basketball
             if (recorder != null && swish) recorder.NoteResult(ball.gameObject, "SWISH");
             Haptics.Pulse(ball.LastHolder, Haptics.Strong, 0.15f);
             if (counted && popup != null) popup.Show(points);
+            if (chime != null)
+            {
+                AudioClip clip = completed ? challengeChime : swish ? swishChime : basketChime;
+                if (clip != null) chime.PlayOneShot(clip, completed ? 1f : 0.8f);
+            }
             if (completed) FinishRound();
         }
 
