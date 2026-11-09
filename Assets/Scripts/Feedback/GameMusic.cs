@@ -89,7 +89,9 @@ namespace MotionArcade.Feedback
             AudioSource source = sources[slot];
             levels[slot] = 0f;
             source.clip = clip;
-            source.loop = clips.Length == 1;
+            // גם שיר יחיד לא בלולאה של Unity: הסוף עובר להתחלה ב-crossfade (הקבצים כבר לא ממוזגים בהתחלה,
+            // גיא שמע שם "סאונדים אחד על השני")
+            source.loop = false;
             source.volume = 0f;
             source.Play();
         }
@@ -100,7 +102,7 @@ namespace MotionArcade.Feedback
 
             gain = Mathf.MoveTowards(gain, gainTarget, Time.deltaTime / Mathf.Max(0.01f, presenceFade));
             AudioSource current = sources[active];
-            if (clips.Length > 1 && current.clip != null && current.time >= current.clip.length - crossfade)
+            if (current.clip != null && current.time >= current.clip.length - crossfade)
             {
                 index = Next(index, clips.Length);
                 active = 1 - active;
