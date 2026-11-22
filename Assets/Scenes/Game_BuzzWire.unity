@@ -5503,6 +5503,7 @@ MonoBehaviour:
   - {fileID: 1210903460}
   exitButton: {fileID: 211599499}
   music: {fileID: 1378902401}
+  moreMusic: []
 --- !u!1 &1005079948
 GameObject:
   m_ObjectHideFlags: 0

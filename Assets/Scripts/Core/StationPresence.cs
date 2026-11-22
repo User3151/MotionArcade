@@ -20,6 +20,7 @@ namespace MotionArcade.Core
         [SerializeField] private GameObject[] showWhenPresent;   // לוח START / STOP / EXIT
         [SerializeField] private Button exitButton;
         [SerializeField] private GameMusic music;                // אופציונלי
+        [SerializeField] private GameMusic[] moreMusic;          // עוד שכבות שנכנסות יחד איתה (בכדורסל: מוזיקה וגם קהל)
 
         private Vector3 returnPosition;
         private Quaternion returnRotation;
@@ -108,6 +109,7 @@ namespace MotionArcade.Core
             if (playScreen != null) playScreen.SetActive(!inside);
             foreach (GameObject go in showWhenPresent) if (go != null) go.SetActive(inside);
             if (music != null) music.SetAudible(inside);
+            if (moreMusic != null) foreach (GameMusic layer in moreMusic) if (layer != null) layer.SetAudible(inside);
             OccupiedChanged?.Invoke(inside);
         }
     }

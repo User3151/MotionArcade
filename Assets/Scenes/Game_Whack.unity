@@ -1766,6 +1766,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.GameMusic
   clips:
   - {fileID: 8300000, guid: fe1b9a95567767342af66e45cfa31b91, type: 3}
+  - {fileID: 8300000, guid: b87dd2d2dacfe424485feb7338984e4e, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
   volume: 0.5
   fadeIn: 1.5
@@ -2784,6 +2785,7 @@ MonoBehaviour:
   - {fileID: 681094679}
   exitButton: {fileID: 211599499}
   music: {fileID: 254563006}
+  moreMusic: []
 --- !u!1 &353182411
 GameObject:
   m_ObjectHideFlags: 0

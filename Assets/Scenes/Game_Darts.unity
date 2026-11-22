@@ -1238,7 +1238,6 @@ MonoBehaviour:
   clips:
   - {fileID: 8300000, guid: e49048e04950c5e429ad39a71f1c3f9f, type: 3}
   - {fileID: 8300000, guid: 46084d00fe233a44898c52dd62fa57a7, type: 3}
-  - {fileID: 8300000, guid: 49136d377f6802a48b3482cf5a9db321, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
   volume: 0.5
   fadeIn: 1.5
@@ -11050,6 +11049,7 @@ MonoBehaviour:
   - {fileID: 1631785479}
   exitButton: {fileID: 467140110}
   music: {fileID: 226310391}
+  moreMusic: []
 --- !u!1 &1908170435
 GameObject:
   m_ObjectHideFlags: 0

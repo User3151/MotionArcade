@@ -6953,6 +6953,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.GameMusic
   clips:
   - {fileID: 8300000, guid: 805ccf04524be2446b1f2020f23f6f43, type: 3}
+  - {fileID: 8300000, guid: a7cd12cd417a4014ba6251a0a08ad010, type: 3}
+  - {fileID: 8300000, guid: 53aa74606e3aa8c45871738eda7f7344, type: 3}
+  - {fileID: 8300000, guid: 15fe254704bed93448c2d7c2614e93e1, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
   volume: 0.35
   fadeIn: 1.5

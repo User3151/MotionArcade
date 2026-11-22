@@ -7498,6 +7498,7 @@ Transform:
   - {fileID: 1061741382}
   - {fileID: 1394739874}
   - {fileID: 1070294277}
+  - {fileID: 1750684052}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1433841197
@@ -7557,6 +7558,8 @@ MonoBehaviour:
   - {fileID: 132827283}
   exitButton: {fileID: 467140110}
   music: {fileID: 1710389244}
+  moreMusic:
+  - {fileID: 1750684051}
 --- !u!1 &1441735353
 GameObject:
   m_ObjectHideFlags: 0
@@ -8377,11 +8380,63 @@ MonoBehaviour:
   clips:
   - {fileID: 8300000, guid: 2718474b4fa5e724cbcade65247c2e65, type: 3}
   output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
-  volume: 0.3
+  volume: 0.2
   fadeIn: 1.5
   crossfade: 2
   waitForPlayer: 1
   presenceFade: 1
+--- !u!1 &1750684050
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1750684052}
+  - component: {fileID: 1750684051}
+  m_Layer: 0
+  m_Name: Music
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1750684051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750684050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7266adad20094f34683fb046145a646d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MotionArcade::MotionArcade.Feedback.GameMusic
+  clips:
+  - {fileID: 8300000, guid: b7dd491a321596a44aee0fddf3d1fff4, type: 3}
+  output: {fileID: 3846969206466186536, guid: 4bfde80ec866afe41a782e892e1ecc23, type: 2}
+  volume: 0.35
+  fadeIn: 1.5
+  crossfade: 2
+  waitForPlayer: 1
+  presenceFade: 1
+--- !u!4 &1750684052
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750684050}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1433841196}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1754327272
 GameObject:
   m_ObjectHideFlags: 0
