@@ -145,6 +145,24 @@ namespace MotionArcade.Tests
             var probe = (CapsuleCollider)so.FindProperty("probe").objectReferenceValue;
             Assert.That(probe.isTrigger, Is.True, "the probe never pushes anything itself");
             Assert.That(so.FindProperty("solid").intValue & 1, Is.EqualTo(1), "machines are on Default");
+
+            // גיא עלה על שולחן כשהתכופף מעליו ונתקע בגובה שלו: אין מדרגות באולם, הרגליים נשארות על הרצפה
+            var cc = (CharacterController)so.FindProperty("body").objectReferenceValue;
+            Assert.That(cc.stepOffset, Is.LessThanOrEqualTo(0.15f), "no stepping up onto tables and kiosks");
+            float floor = so.FindProperty("floorHeight").floatValue;
+            Assert.That(rig.transform.position.y, Is.EqualTo(floor).Within(0.001f), "the rig starts on the floor");
+            foreach (var anchor in hub.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UnityEngine.XR.Interaction.Toolkit.Locomotion.Teleportation.TeleportationAnchor>(true)))
+                Assert.That(anchor.transform.position.y, Is.EqualTo(floor).Within(0.001f), anchor.name + ": every spot is on the same floor");
+        }
+
+        [Test]
+        public void ThePlayer_StaysOnTheFloor_ButKeepsMovingAcross()
+        {
+            Vector3 lifted = new Vector3(1.2f, 0.84f, -0.4f);   // ה-CharacterController העלה את השחקן לגובה השולחן
+            Vector3 fixedPos = MotionArcade.Interaction.BodyCollision.OnFloor(lifted, 0f);
+            Assert.That(fixedPos.y, Is.EqualTo(0f));
+            Assert.That(fixedPos.x, Is.EqualTo(1.2f));
+            Assert.That(fixedPos.z, Is.EqualTo(-0.4f));
         }
     }
 }

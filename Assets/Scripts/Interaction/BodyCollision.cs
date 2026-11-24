@@ -11,6 +11,9 @@ namespace MotionArcade.Interaction
     //    או קיר (הליכה פיזית), השחקן נדחף החוצה. לא בתוך משחק: שם מותר להתכופף אל המכונה.
     // 2. "הפטישים נופלים מהשולחן בלי שאני עושה כלום": הפטישים מונחים 16 ס"מ מול עמדת המשחק, בתוך הרדיוס של הגוף,
     //    והפיזיקה דחפה אותם החוצה. הגוף לא מתנגש בחפצי משחק (כל מה שיש לו Rigidbody): רק במכונות, בקירות ובשולחנות.
+    // 3. "אני פתאום עולה על השולחן ונתקע בגובה שלו" (גיא, PSVR2, 2026-11-24): כשמתכופפים מעל שולחן או קיוסק, הגוף
+    //    (שנמצא תמיד מתחת לראש) נכנס לתוכו, וה-CharacterController פתר את החפיפה בכך שהעלה את השחקן למעלה.
+    //    באולם אין מדרגות ואין קפיצה: הרגליים תמיד על הרצפה.
     [DefaultExecutionOrder(200)]   // אחרי המעקב של הראש
     public class BodyCollision : MonoBehaviour
     {
@@ -19,6 +22,7 @@ namespace MotionArcade.Interaction
         [SerializeField] private CapsuleCollider probe;        // טריגר עזר לחישוב חדירה
         [SerializeField] private LayerMask solid = 1 | 1 << 2; // Default (מכונות, קירות) ו-Ignore Raycast (BodyBlocker)
         [SerializeField] private float radius = 0.2f;
+        [SerializeField] private float floorHeight = 0f;       // גובה הרצפה של האולם (כל עמדות המשחק עליה)
 
         private readonly Collider[] hits = new Collider[24];
         private readonly HashSet<Collider> ignored = new HashSet<Collider>();
@@ -28,9 +32,20 @@ namespace MotionArcade.Interaction
         private bool hasFree;
 
         public Vector3 LastPush { get; private set; }
+        public float FloorHeight => floorHeight;
+
+        // השחקן לא עולה על שום דבר: רק הגובה חוזר לרצפה, התנועה האופקית נשארת
+        public static Vector3 OnFloor(Vector3 originPosition, float floor) => new Vector3(originPosition.x, floor, originPosition.z);
 
         private void LateUpdate()
         {
+            Vector3 position = origin.transform.position;
+            if (Mathf.Abs(position.y - floorHeight) > 0.0005f)
+            {
+                origin.transform.position = OnFloor(position, floorHeight);
+                Physics.SyncTransforms();
+            }
+
             Transform head = origin.Camera.transform;
             Vector3 local = origin.transform.InverseTransformPoint(head.position);
             body.center = new Vector3(local.x, body.center.y, local.z);
